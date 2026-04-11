@@ -32,8 +32,6 @@
             background-color: var(--secondary);
             color: var(--text-light);
             letter-spacing: 0.3px;
-            overflow-x: hidden;
-            display: flex;
         }
 
         .text-muted { color: var(--text-muted) !important; }
@@ -111,7 +109,6 @@
 
         /* Main Content */
         .main-content {
-            flex: 1;
             margin-left: var(--sidebar-width);
             display: flex;
             flex-direction: column;

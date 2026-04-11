@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container-fluid" style="max-width: 1200px;">
+<div class="container-fluid">
 
     {{-- Page Header --}}
     <div class="row mb-4 align-items-end">
@@ -140,10 +140,10 @@
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Kode Order</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Pelanggan</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Daftar Item</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase text-center" style="font-size: 0.75rem; letter-spacing: 1px;">Status</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Total</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Status</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Bayar</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Total</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Tanggal/Waktu</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Status Bayar</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase text-end" style="font-size: 0.75rem; letter-spacing: 1px;">Aksi</th>
                         </tr>
                     </thead>
@@ -186,13 +186,6 @@
                             </td>
                             <td class="py-3 px-4 align-middle">
                                 <span class="text-white fw-medium" style="font-size: 0.9rem;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
-                                <span class="d-block" style="font-size: 0.75rem;">
-                                    @if($order->payment_status === 'lunas')
-                                        <span class="text-success"><i class="fas fa-circle-check me-1" style="font-size: 0.65rem;"></i>Lunas</span>
-                                    @else
-                                        <span class="text-warning"><i class="fas fa-circle me-1" style="font-size: 0.65rem;"></i>Belum Lunas</span>
-                                    @endif
-                                </span>
                             </td>
                             <td class="py-3 px-4 align-middle text-muted" style="font-size: 0.82rem;">
                                 {{ $order->created_at->format('d M Y') }}<br>

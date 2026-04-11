@@ -25,9 +25,9 @@ class DashboardController extends Controller
     private function getDashboardData()
     {
         // Get counts for widgets
-        $activeOrders = \App\Models\Order::whereNotIn('status', ['completed', 'cancelled'])->count();
+        $activeOrders = \App\Models\Order::whereNotIn('status', ['Selesai', 'Dibatalkan'])->count();
         $todayPickups = \App\Models\Order::whereDate('pickup_date', today())->count();
-        $todayDeliveries = \App\Models\Order::whereDate('estimated_completion', today())->where('status', 'ready_for_delivery')->count();
+        $todayDeliveries = \App\Models\Order::whereDate('estimated_completion', today())->whereIn('status', ['Siap Dikirim', 'Siap Diambil'])->count();
 
         // --- Data for ApexCharts ---
         
@@ -136,21 +136,21 @@ class DashboardController extends Controller
         $totalOrders = \App\Models\Order::where('customer_id', $customerId)->count();
 
         $activeOrders = \App\Models\Order::where('customer_id', $customerId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', ['Selesai', 'Dibatalkan'])
             ->count();
 
         $completedOrders = \App\Models\Order::where('customer_id', $customerId)
-            ->where('status', 'completed')
+            ->where('status', 'Selesai')
             ->count();
 
         $unpaidOrders = \App\Models\Order::where('customer_id', $customerId)
             ->where('payment_status', 'belum_lunas')
-            ->whereNotIn('status', ['cancelled'])
+            ->whereNotIn('status', ['Dibatalkan'])
             ->count();
 
         $activeOrdersList = \App\Models\Order::with(['items.treatment'])
             ->where('customer_id', $customerId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', ['Selesai', 'Dibatalkan'])
             ->latest()
             ->take(3)
             ->get();

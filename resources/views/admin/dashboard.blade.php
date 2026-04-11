@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container-fluid" style="max-width: 1200px;">
+<div class="container-fluid">
     <!-- Page Header -->
     <div class="row mb-5 align-items-end">
         <div class="col-md-8">
@@ -134,16 +134,14 @@
                             <td class="py-3 px-4 align-middle">
                                 @php
                                     $statusBadge = [
-                                        'pending' => 'bg-secondary',
-                                        'pickup_scheduled' => 'bg-info text-dark',
-                                        'picked_up' => 'bg-info text-dark',
-                                        'in_queue' => 'bg-warning text-dark',
-                                        'cleaning_in_progress' => 'bg-primary',
-                                        'quality_check' => 'bg-warning text-dark',
-                                        'ready_for_delivery' => 'bg-success',
-                                        'delivery_in_progress' => 'bg-info text-dark',
-                                        'completed' => 'bg-success',
-                                        'cancelled' => 'bg-danger'
+                                        'Antrian' => 'bg-secondary',
+                                        'Menunggu Konfirmasi' => 'bg-info text-dark',
+                                        'Diterima Toko' => 'bg-primary',
+                                        'Dikerjakan' => 'bg-warning text-dark',
+                                        'Siap Diambil' => 'bg-success',
+                                        'Siap Dikirim' => 'bg-success',
+                                        'Selesai' => 'bg-success',
+                                        'Dibatalkan' => 'bg-danger'
                                     ];
                                     $badgeClass = $statusBadge[$order->status] ?? 'bg-secondary';
                                 @endphp

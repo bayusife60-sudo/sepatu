@@ -60,9 +60,11 @@
             <p class="text-white mb-0" style="font-size: 0.9rem; font-weight: 300; opacity: 0.85;">Pantau pesanan dan riwayat layanan Anda di sini.</p>
         </div>
         <div class="mt-3 mt-md-0 d-flex gap-2">
+            @if($activeOrdersList->count() == 0)
             <button class="btn btn-primary px-4 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#orderModal" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(244,114,182,0.3); transition: all 0.3s; border-radius: 8px;">
                 <i class="fas fa-plus-circle"></i> Pesan Sekarang
             </button>
+            @endif
             <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(244,114,182,0.15); color: var(--primary); font-size: 0.78rem; letter-spacing: 0.5px; display: flex; align-items: center;">
                 <i class="fas fa-circle me-1" style="font-size: 0.5rem; vertical-align: middle;"></i> Pelanggan Aktif
             </span>
@@ -145,26 +147,26 @@
                     @php
                         $status = $activeOrder->status;
                         $payment = $activeOrder->payment_status;
+                        $method = $activeOrder->service_method;
                         
-                        // Define steps logic
+                        // Define steps logic based on actual status strings used in the app
                         $stepPaid = ($payment === 'lunas');
                         
-                        // Step 2: Pickup/Dropoff
-                        $method = $activeOrder->service_method;
-                        $stepReceived = in_array($status, ['picked_up', 'in_queue', 'cleaning_in_progress', 'quality_check', 'ready_for_delivery', 'delivery_in_progress', 'completed']);
-                        $receiveLabel = ($method === 'pickup') ? 'Di-pickup' : 'Diterima Toko';
-                        $receiveIcon = ($method === 'pickup') ? 'fa-box-open' : 'fa-store';
+                        // Step 2: Diterima / Pickup
+                        $stepReceived = in_array($status, ['Diterima Toko', 'Dikerjakan', 'Siap Diambil', 'Siap Dikirim', 'Selesai']);
+                        $receiveLabel = ($method === 'pickup_delivery') ? 'Di-pickup' : 'Diterima Toko';
+                        $receiveIcon = ($method === 'pickup_delivery') ? 'fa-box-open' : 'fa-store';
 
                         // Step 3: Dikerjakan
-                        $stepWorking = in_array($status, ['cleaning_in_progress', 'quality_check', 'ready_for_delivery', 'delivery_in_progress', 'completed']);
+                        $stepWorking = in_array($status, ['Dikerjakan', 'Siap Diambil', 'Siap Dikirim', 'Selesai']);
 
-                        // Step 4: Delivery/Ambil
-                        $stepDelivery = in_array($status, ['delivery_in_progress', 'completed']);
-                        $deliveryLabel = ($method === 'delivery') ? 'Dalam Pengiriman' : 'Siap Diambil';
-                        $deliveryIcon = ($method === 'delivery') ? 'fa-truck' : 'fa-shopping-bag';
+                        // Step 4: Siap Diambil / Dikirim
+                        $stepDelivery = in_array($status, ['Siap Diambil', 'Siap Dikirim', 'Selesai']);
+                        $deliveryLabel = ($method === 'pickup_delivery') ? 'Siap Dikirim' : 'Siap Diambil';
+                        $deliveryIcon = ($method === 'pickup_delivery') ? 'fa-truck' : 'fa-shopping-bag';
 
                         // Step 5: Selesai
-                        $stepDone = ($status === 'completed');
+                        $stepDone = ($status === 'Selesai');
 
                         // Current active step calculation for progress bar width
                         $progressPercent = 0;
@@ -311,10 +313,9 @@
                                 'Diterima Toko' => ['label' => 'Diterima Toko', 'class' => 'bg-primary'],
                                 'Dikerjakan' => ['label' => 'Dikerjakan', 'class' => 'bg-warning text-dark'],
                                 'Siap Diambil' => ['label' => 'Siap Diambil', 'class' => 'bg-success'],
-                                'ready_for_delivery' => ['label' => 'Siap Dikirim', 'class' => 'bg-success'],
-                                'delivery_in_progress' => ['label' => 'Sedang Dikirim', 'class' => 'bg-success'],
-                                'completed' => ['label' => 'Selesai', 'class' => 'bg-success'],
-                                'cancelled' => ['label' => 'Dibatalkan', 'class' => 'bg-danger'],
+                                'Siap Dikirim' => ['label' => 'Siap Dikirim', 'class' => 'bg-success'],
+                                'Selesai' => ['label' => 'Selesai', 'class' => 'bg-success'],
+                                'Dibatalkan' => ['label' => 'Dibatalkan', 'class' => 'bg-danger'],
                             ];
                             $statusInfo = $statusMap[$order->status] ?? ['label' => $order->status, 'class' => 'bg-secondary'];
                         @endphp

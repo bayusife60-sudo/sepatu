@@ -120,8 +120,8 @@
         </div>
 
         <div class="footer">
-            Terima kasih telah mempercayakan perawatan sepatu Anda kepada CLOZE LAUNDRY.<br>
-            Jl. Raya Kedoya No.123, Jakarta Barat | WhatsApp: 0812-3456-7890 | Instagram: @cloze.laundry
+            Terima kasih telah mempercayakan perawatan sepatu Anda kepada CLEANSETZ.<br>
+            Jl. Raya Kedoya No.123, Jakarta Barat | WhatsApp: 0812-3456-7890 | Instagram: @cleansetz
         </div>
     </div>
 </body>
