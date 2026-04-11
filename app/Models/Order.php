@@ -14,26 +14,31 @@ class Order extends Model
         'qr_code',
         'customer_id',
         'customer_name',
-        'shoe_type',
-        'shoe_brand',
-        'treatment_id',
-        'photo_before',
-        'photo_after',
+        'customer_phone',
         'service_method',
+        'latitude',
+        'longitude',
+        'distance',
         'pickup_address',
         'pickup_date',
+        'pickup_time',
         'delivery_address',
         'delivery_date',
         'pickup_fee',
         'delivery_fee',
-        'price',
         'total_price',
         'status',
         'payment_status',
+        'payment_proof',
         'payment_method',
         'payment_date',
         'estimated_completion',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 
     public function customer()
     {

@@ -13,7 +13,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(["customer", "treatment"])->latest();
+        $query = Order::with(["customer", "items.treatment"])->latest();
 
         if ($request->filled("status")) {
             $query->where("status", $request->status);
@@ -24,31 +24,90 @@ class OrderController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where("order_code", "like", "%{$search}%")
                   ->orWhere("customer_name", "like", "%{$search}%")
-                  ->orWhere("shoe_brand", "like", "%{$search}%")
                   ->orWhereHas("customer", function ($q2) use ($search) {
                       $q2->where("name", "like", "%{$search}%");
                   });
             });
         }
 
+        // Filter by Customer
+        if ($request->filled("customer_id")) {
+            $query->where("customer_id", $request->customer_id);
+        }
+
+        // Filter by Date Range
+        if ($request->filled("start_date")) {
+            $query->whereDate("created_at", ">=", $request->start_date);
+        }
+        if ($request->filled("end_date")) {
+            $query->whereDate("created_at", "<=", $request->end_date);
+        }
+
         $orders = $query->paginate(15)->withQueryString();
+        $customers = User::where("role", "customer")->orderBy("name")->get();
 
         $allStatuses = [
-            "pending", "pickup_scheduled", "picked_up", "in_queue",
-            "cleaning_in_progress", "quality_check", "ready_for_delivery",
-            "delivery_in_progress", "completed", "cancelled",
+            "Antrian", "Menunggu Konfirmasi", "Diterima Toko", 
+            "Dikerjakan", "Siap Diambil", "Siap Dikirim", 
+            "Selesai", "Dibatalkan"
         ];
 
-        return view("admin.orders.index", compact("orders", "allStatuses"));
+        return view("admin.orders.index", compact("orders", "allStatuses", "customers"));
+    }
+
+    /**
+     * Export Filtered Orders to PDF
+     */
+    public function exportPDF(Request $request)
+    {
+        $query = Order::with(["customer", "items.treatment"])->latest();
+
+        // Apply same filters as index
+        if ($request->filled("status")) $query->where("status", $request->status);
+        if ($request->filled("customer_id")) $query->where("customer_id", $request->customer_id);
+        if ($request->filled("start_date")) $query->whereDate("created_at", ">=", $request->start_date);
+        if ($request->filled("end_date")) $query->whereDate("created_at", "<=", $request->end_date);
+        
+        if ($request->filled("search")) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where("order_code", "like", "%{$search}%")
+                  ->orWhere("customer_name", "like", "%{$search}%")
+                  ->orWhereHas("customer", function ($q2) use ($search) {
+                      $q2->where("name", "like", "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $query->get();
+        $dateRange = "";
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $dateRange = ($request->start_date ?? '...') . " s/d " . ($request->end_date ?? '...');
+        }
+
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('defaultFont', 'Helvetica');
+
+        $dompdf = new \Dompdf\Dompdf($options);
+        $html = view('admin.orders.report_pdf', compact('orders', 'dateRange'))->render();
+        
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return response($dompdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Laporan_Order_' . now()->format('Ymd') . '.pdf"');
     }
 
     public function show(Order $order)
     {
-        $order->load(["customer", "treatment"]);
+        $order->load(["customer", "items.treatment"]);
         $allStatuses = [
-            "pending", "pickup_scheduled", "picked_up", "in_queue",
-            "cleaning_in_progress", "quality_check", "ready_for_delivery",
-            "delivery_in_progress", "completed", "cancelled",
+            "Antrian", "Menunggu Konfirmasi", "Diterima Toko", 
+            "Dikerjakan", "Siap Diambil", "Siap Dikirim", 
+            "Selesai", "Dibatalkan"
         ];
         return view("admin.orders.show", compact("order", "allStatuses"));
     }
@@ -56,13 +115,25 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            "status" => "required|in:pending,pickup_scheduled,picked_up,in_queue,cleaning_in_progress,quality_check,ready_for_delivery,delivery_in_progress,completed,cancelled",
+            "status" => "required|string",
         ]);
 
         $order->update(["status" => $request->status]);
 
         return redirect()->back()
             ->with("success", "Status order #" . $order->order_code . " berhasil diperbarui!");
+    }
+
+    public function confirmPayment(Order $order)
+    {
+        $order->update([
+            'payment_status' => 'lunas',
+            'payment_date' => now(),
+            'status' => 'Diterima Toko' // Automatically move to next status after payment confirmed
+        ]);
+
+        return redirect()->back()
+            ->with("success", "Pembayaran untuk order #" . $order->order_code . " telah dikonfirmasi!");
     }
 
     public function create()
@@ -78,58 +149,73 @@ class OrderController extends Controller
         $validated = $request->validate([
             "customer_id"          => "required|exists:users,id",
             "customer_name"        => "nullable|string|max:150",
-            "shoe_type"            => "required|string|max:100",
-            "shoe_brand"           => "required|string|max:100",
-            "treatment_id"         => "required|exists:treatments,id",
-            "service_method"       => "required|string|in:datang_langsung,pickup,delivery",
-            "pickup_address"       => "nullable|required_if:service_method,pickup|string|max:500",
-            "pickup_date"          => "nullable|required_if:service_method,pickup|date",
-            "delivery_address"     => "nullable|required_if:service_method,delivery|string|max:500",
-            "delivery_date"        => "nullable|required_if:service_method,delivery|date",
-            "price"                => "required|numeric|min:0",
+            "customer_phone"       => "nullable|string|max:20",
+            "service_method"       => "required|in:datang_langsung,pickup_delivery",
+            "pickup_address"       => "nullable|string|max:500",
+            "pickup_date"          => "nullable|date",
             "estimated_completion" => "nullable|date",
             "payment_method"       => "nullable|string|max:100",
             "payment_status"       => "required|in:lunas,belum_lunas",
+            "items"                => "required|array|min:1",
+            "items.*.shoe_brand"   => "required|string",
+            "items.*.shoe_material"=> "required|string",
+            "items.*.shoe_color"   => "required|string",
+            "items.*.treatment_id" => "required|exists:treatments,id",
+            "items.*.price"        => "required|numeric|min:0",
         ]);
 
-        $treatment = Treatment::findOrFail($validated["treatment_id"]);
+        try {
+            return \DB::transaction(function () use ($validated, $request) {
+                // Generate Order Code
+                do {
+                    $orderCode = "CLZ-" . strtoupper(\Str::random(8));
+                } while (Order::where("order_code", $orderCode)->exists());
 
-        $price       = (float) $validated["price"];
-        $pickupFee   = ($validated["service_method"] === "pickup")   ? 40000 : 0;
-        $deliveryFee = ($validated["service_method"] === "delivery") ? 40000 : 0;
-        $totalPrice  = $price + $pickupFee + $deliveryFee;
+                $user = User::find($validated["customer_id"]);
 
-        $customerName = !empty($validated["customer_name"])
-            ? $validated["customer_name"]
-            : (User::find($validated["customer_id"])->name ?? "");
+                $customerName = !empty($validated["customer_name"])
+                    ? $validated["customer_name"]
+                    : ($user->name ?? "");
 
-        do {
-            $orderCode = "CLZ-" . strtoupper(Str::random(8));
-        } while (Order::where("order_code", $orderCode)->exists());
+                $customerPhone = !empty($validated["customer_phone"])
+                    ? $validated["customer_phone"]
+                    : ($user->phone ?? null);
 
-        Order::create([
-            "order_code"           => $orderCode,
-            "customer_id"          => $validated["customer_id"],
-            "customer_name"        => $customerName,
-            "shoe_type"            => $validated["shoe_type"],
-            "shoe_brand"           => $validated["shoe_brand"],
-            "treatment_id"         => $treatment->id,
-            "service_method"       => $validated["service_method"],
-            "pickup_address"       => $validated["pickup_address"] ?? null,
-            "pickup_date"          => $validated["pickup_date"] ?? null,
-            "delivery_address"     => $validated["delivery_address"] ?? null,
-            "delivery_date"        => $validated["delivery_date"] ?? null,
-            "pickup_fee"           => $pickupFee,
-            "delivery_fee"         => $deliveryFee,
-            "price"                => $price,
-            "total_price"          => $totalPrice,
-            "status"               => "pending",
-            "payment_method"       => $validated["payment_method"] ?? null,
-            "payment_status"       => $validated["payment_status"],
-            "estimated_completion" => $validated["estimated_completion"] ?? null,
-        ]);
+                $pickupFee = ($validated["service_method"] === "pickup_delivery") ? 40000 : 0;
+                $itemsPrice = collect($request->items)->sum('price');
+                $totalPrice = $itemsPrice + $pickupFee;
 
-        return redirect()->route("admin.orders.index")
-            ->with("success", "Order baru berhasil dibuat dengan kode " . $orderCode . "!");
+                $order = Order::create([
+                    "order_code"           => $orderCode,
+                    "customer_id"          => $validated["customer_id"],
+                    "customer_name"        => $customerName,
+                    "customer_phone"       => $customerPhone,
+                    "service_method"       => $validated["service_method"],
+                    "pickup_address"       => $validated["pickup_address"] ?? null,
+                    "pickup_date"          => $validated["pickup_date"] ?? null,
+                    "pickup_fee"           => $pickupFee,
+                    "total_price"          => $totalPrice,
+                    "status"               => "Antrian",
+                    "payment_method"       => $validated["payment_method"] ?? null,
+                    "payment_status"       => $validated["payment_status"],
+                    "estimated_completion" => $validated["estimated_completion"] ?? null,
+                ]);
+
+                foreach ($request->items as $item) {
+                    $order->items()->create([
+                        'shoe_brand'    => $item['shoe_brand'],
+                        'shoe_material' => $item['shoe_material'],
+                        'shoe_color'    => $item['shoe_color'],
+                        'treatment_id'  => $item['treatment_id'],
+                        'price'         => $item['price'],
+                    ]);
+                }
+
+                return redirect()->route("admin.orders.index")
+                    ->with("success", "Order #" . $orderCode . " berhasil dibuat!");
+            });
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal menyimpan order: ' . $e->getMessage());
+        }
     }
 }

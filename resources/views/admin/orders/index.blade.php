@@ -28,39 +28,66 @@
 
     {{-- Filter & Search --}}
     <div class="card mb-4">
-        <div class="card-body p-3">
-            <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-2 align-items-end">
-                <div class="col-md-5">
+        <div class="card-body p-4">
+            <form method="GET" id="filterForm" action="{{ route('admin.orders.index') }}" class="row g-3">
+                <div class="col-md-3">
                     <label class="form-label text-muted small text-uppercase fw-bold mb-1" style="letter-spacing: 1px; font-size: 0.7rem;">Cari Order</label>
                     <div class="input-group">
                         <span class="input-group-text" style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #a0a0a0;">
                             <i class="fas fa-search" style="font-size: 0.85rem;"></i>
                         </span>
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control"
-                               placeholder="Kode order, nama pelanggan, merek..."
+                               placeholder="Kode, Nama, Merek..."
                                style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-left: none;">
                     </div>
                 </div>
-                <div class="col-md-4">
+
+                <div class="col-md-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1" style="letter-spacing: 1px; font-size: 0.7rem;">Pelanggan</label>
+                    <select name="customer_id" class="form-select" style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0;">
+                        <option value="">Semua Pelanggan</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                                {{ $customer->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-2">
                     <label class="form-label text-muted small text-uppercase fw-bold mb-1" style="letter-spacing: 1px; font-size: 0.7rem;">Filter Status</label>
-                    <select name="status" class="form-select"
-                            style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0;">
+                    <select name="status" class="form-select" style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0;">
                         <option value="">Semua Status</option>
                         @foreach($allStatuses as $st)
                         <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>
-                            {{ ucwords(str_replace('_', ' ', $st)) }}
+                            {{ $st }}
                         </option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-fill" style="padding: 0.6rem;">
-                        <i class="fas fa-filter me-1"></i>Filter
+
+                <div class="col-md-4">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1" style="letter-spacing: 1px; font-size: 0.7rem;">Rentang Tanggal</label>
+                    <div class="input-group">
+                        <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control" style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; font-size: 0.85rem;">
+                        <span class="input-group-text bg-transparent border-white-10 text-white-50 px-2 small">s/d</span>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control" style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; font-size: 0.85rem;">
+                    </div>
+                </div>
+
+                <div class="col-12 text-end d-flex gap-2 justify-content-end mt-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-filter me-2"></i>Filter
                     </button>
-                    @if(request('search') || request('status'))
-                    <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-custom" style="padding: 0.6rem 0.8rem;" title="Reset">
-                        <i class="fas fa-times"></i>
-                    </a>
+                    
+                    <button type="button" onclick="exportReport()" class="btn btn-outline-info px-4">
+                        <i class="fas fa-file-pdf me-2"></i>Cetak Laporan
+                    </button>
+
+                    @if(request()->anyFilled(['search', 'status', 'customer_id', 'start_date', 'end_date']))
+                        <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-danger px-3">
+                            <i class="fas fa-times me-2"></i>Reset
+                        </a>
                     @endif
                 </div>
             </form>
@@ -69,17 +96,17 @@
 
     {{-- Stats Row --}}
     @php
-        $totalAll       = \App\Models\Order::count();
-        $totalPending   = \App\Models\Order::where('status', 'pending')->count();
-        $totalProcess   = \App\Models\Order::whereIn('status', ['pickup_scheduled','picked_up','in_queue','cleaning_in_progress','quality_check'])->count();
-        $totalDone      = \App\Models\Order::where('status', 'completed')->count();
+        $totalAll        = \App\Models\Order::count();
+        $totalAntrian    = \App\Models\Order::where('status', 'Antrian')->count();
+        $totalProcess    = \App\Models\Order::whereIn('status', ['Diterima Toko','Dikerjakan'])->count();
+        $totalBayar      = \App\Models\Order::where('payment_status', 'belum_lunas')->whereNotNull('payment_proof')->count();
     @endphp
     <div class="row g-3 mb-4">
         @foreach([
             ['label' => 'Total Order', 'value' => $totalAll, 'color' => 'rgba(244,114,182,0.15)', 'border' => 'var(--primary)', 'icon' => 'fa-list'],
-            ['label' => 'Pending', 'value' => $totalPending, 'color' => 'rgba(107,114,128,0.15)', 'border' => '#6b7280', 'icon' => 'fa-clock'],
-            ['label' => 'Dalam Proses', 'value' => $totalProcess, 'color' => 'rgba(234,179,8,0.15)', 'border' => '#eab308', 'icon' => 'fa-spinner'],
-            ['label' => 'Selesai', 'value' => $totalDone, 'color' => 'rgba(34,197,94,0.15)', 'border' => '#22c55e', 'icon' => 'fa-check-circle'],
+            ['label' => 'Antrian Baru', 'value' => $totalAntrian, 'color' => 'rgba(107,114,128,0.15)', 'border' => '#6b7280', 'icon' => 'fa-clock'],
+            ['label' => 'Perlu Konv. Bayar', 'value' => $totalBayar, 'color' => 'rgba(56,189,248,0.15)', 'border' => '#38bdf8', 'icon' => 'fa-money-bill-wave'],
+            ['label' => 'Sedang Diproses', 'value' => $totalProcess, 'color' => 'rgba(234,179,8,0.15)', 'border' => '#eab308', 'icon' => 'fa-spinner'],
         ] as $stat)
         <div class="col-6 col-md-3">
             <div class="card h-100" style="background: {{ $stat['color'] }}; border-left: 3px solid {{ $stat['border'] }};">
@@ -107,16 +134,16 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover mb-0">
+                <table class="table table-dark table-hover mb-0 align-middle">
                     <thead>
                         <tr style="border-bottom: 2px solid rgba(255,255,255,0.08);">
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Kode Order</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Pelanggan</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Sepatu</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Treatment</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Status</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Daftar Item</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase text-center" style="font-size: 0.75rem; letter-spacing: 1px;">Status</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Total</th>
-                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Tanggal</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Status</th>
+                            <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Bayar</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase text-end" style="font-size: 0.75rem; letter-spacing: 1px;">Aksi</th>
                         </tr>
                     </thead>
@@ -124,16 +151,14 @@
                         @forelse($orders as $order)
                         @php
                             $statusMap = [
-                                'pending'              => ['class' => 'bg-secondary',         'label' => 'Pending'],
-                                'pickup_scheduled'     => ['class' => 'bg-info text-dark',    'label' => 'Jadwal Pickup'],
-                                'picked_up'            => ['class' => 'bg-info text-dark',    'label' => 'Sudah Pickup'],
-                                'in_queue'             => ['class' => 'bg-warning text-dark', 'label' => 'Antrian'],
-                                'cleaning_in_progress' => ['class' => 'bg-primary',           'label' => 'Proses Cuci'],
-                                'quality_check'        => ['class' => 'bg-warning text-dark', 'label' => 'QC'],
-                                'ready_for_delivery'   => ['class' => 'bg-success',           'label' => 'Siap Kirim'],
-                                'delivery_in_progress' => ['class' => 'bg-info text-dark',    'label' => 'Dalam Pengiriman'],
-                                'completed'            => ['class' => 'bg-success',           'label' => 'Selesai'],
-                                'cancelled'            => ['class' => 'bg-danger',            'label' => 'Dibatalkan'],
+                                'Antrian'             => ['class' => 'bg-secondary',         'label' => 'Antrian'],
+                                'Menunggu Konfirmasi' => ['class' => 'bg-info',              'label' => 'Cek Bayar'],
+                                'Diterima Toko'       => ['class' => 'bg-primary',           'label' => 'Diterima'],
+                                'Dikerjakan'          => ['class' => 'bg-warning text-dark', 'label' => 'Proses'],
+                                'Siap Diambil'        => ['class' => 'bg-success',           'label' => 'Ready'],
+                                'Siap Dikirim'        => ['class' => 'bg-success',           'label' => 'Ready Kirim'],
+                                'Selesai'             => ['class' => 'bg-success',           'label' => 'Selesai'],
+                                'Dibatalkan'          => ['class' => 'bg-danger',            'label' => 'Batal'],
                             ];
                             $badge = $statusMap[$order->status] ?? ['class' => 'bg-secondary', 'label' => $order->status];
                         @endphp
@@ -146,11 +171,13 @@
                                 <span class="text-muted" style="font-size: 0.78rem;">{{ $order->customer->email ?? '-' }}</span>
                             </td>
                             <td class="py-3 px-4 align-middle">
-                                <span class="d-block text-white" style="font-size: 0.9rem;">{{ $order->shoe_brand }}</span>
-                                <span class="text-muted" style="font-size: 0.78rem;">{{ $order->shoe_type }}</span>
-                            </td>
-                            <td class="py-3 px-4 align-middle">
-                                <span class="text-muted small">{{ $order->treatment->name ?? '-' }}</span>
+                                @foreach($order->items as $item)
+                                    <div class="mb-1" style="font-size: 0.85rem;">
+                                        <i class="fas fa-shoe-prints me-1 text-primary" style="font-size: 0.7rem;"></i>
+                                        <span class="text-white">{{ $item->shoe_brand }}</span>
+                                        <span class="text-muted">({{ $item->treatment->name ?? '-' }})</span>
+                                    </div>
+                                @endforeach
                             </td>
                             <td class="py-3 px-4 align-middle">
                                 <span class="badge {{ $badge['class'] }} rounded-pill px-3 py-1" style="font-size: 0.75rem; font-weight: 500;">
@@ -171,12 +198,93 @@
                                 {{ $order->created_at->format('d M Y') }}<br>
                                 <span style="font-size: 0.75rem;">{{ $order->created_at->format('H:i') }}</span>
                             </td>
+                            <td class="py-3 px-4">
+                                @if($order->payment_status == 'lunas')
+                                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.65rem; border: 1px solid rgba(25,135,84,0.1);">Lunas</span>
+                                @else
+                                    <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.65rem; border: 1px solid rgba(220,53,69,0.1);">Belum Bayar</span>
+                                @endif
+                            </td>
                             <td class="py-3 px-4 align-middle text-end">
-                                <a href="{{ route('admin.orders.show', $order) }}"
-                                   class="btn btn-sm btn-outline-light rounded-circle me-1"
-                                   title="Lihat Detail" style="width: 32px; height: 32px; padding: 0; line-height: 30px; text-align: center;">
-                                    <i class="fas fa-eye" style="font-size: 0.8rem;"></i>
-                                </a>
+                                <div class="d-flex justify-content-end align-items-center gap-2">
+                                    {{-- WhatsApp Button --}}
+                                    @php
+                                        $phone = $order->customer_phone ?: ($order->customer->phone ?? '');
+                                        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+                                        if (str_starts_with($cleanPhone, '0')) {
+                                            $cleanPhone = '62' . substr($cleanPhone, 1);
+                                        }
+                                        $invoiceUrl = route('public.invoice', $order->order_code);
+                                        $msg = "Halo " . ($order->customer_name ?: 'Pelanggan') . ", pesanan Laundry Sepatu Anda #" . $order->order_code . " saat ini berstatus: " . $order->status . ".\n\nLihat invoice lengkap di sini:\n" . $invoiceUrl;
+                                        $waUrl = "https://wa.me/" . $cleanPhone . "?text=" . urlencode($msg);
+                                    @endphp
+                                    <a href="{{ $waUrl }}" target="_blank" 
+                                       class="btn btn-sm btn-success rounded-circle d-flex align-items-center justify-content-center" 
+                                       title="Kirim WhatsApp" style="width: 30px; height: 30px; padding: 0; background-color: #25d366; border: none;">
+                                        <i class="fab fa-whatsapp" style="font-size: 0.8rem;"></i>
+                                    </a>
+
+                                    {{-- Status Trigger Modal --}}
+                                    <button class="btn btn-sm btn-outline-custom rounded-pill d-flex align-items-center gap-2" 
+                                            type="button" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#updateStatusModal{{ $order->id }}"
+                                            style="font-size: 0.72rem; padding: 0.4rem 0.8rem;">
+                                        <i class="fas fa-sync-alt" style="font-size: 0.65rem;"></i> Status
+                                    </button>
+
+                                    {{-- Status Update Modal --}}
+                                    <div class="modal fade" id="updateStatusModal{{ $order->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content" style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 15px;">
+                                                <div class="modal-header border-bottom border-white-5 p-4">
+                                                    <h5 class="modal-title text-white fw-bold">Update Status Order</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form action="{{ route('admin.orders.updateStatus', $order) }}" method="POST">
+                                                    @csrf @method('PATCH')
+                                                    <div class="modal-body p-4 text-start">
+                                                        <div class="mb-3">
+                                                            <div class="small text-muted mb-2 text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.65rem;">Kode Order</div>
+                                                            <div class="text-white fs-5 fw-bold">#{{ $order->order_code }}</div>
+                                                        </div>
+                                                        <div class="mb-4">
+                                                            <label class="form-label text-muted small mb-2">Pilih Status Baru:</label>
+                                                            <select name="status" class="form-select form-select-lg" style="background: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                                                                @foreach($allStatuses as $st)
+                                                                    <option value="{{ $st }}" {{ $order->status == $st ? 'selected' : '' }}>{{ $st }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="p-3 rounded-3 mb-2" style="background: rgba(244,114,182,0.05); border: 1px solid rgba(244,114,182,0.1);">
+                                                            <div class="small text-white-50">
+                                                                <i class="fas fa-info-circle me-1 text-primary"></i> 
+                                                                Status saat ini: <span class="text-primary fw-bold">{{ $order->status }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-top border-white-5 p-4">
+                                                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-primary px-4 py-2">Update Status</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ route('admin.orders.show', $order) }}"
+                                       class="btn btn-sm btn-outline-light rounded-circle d-flex align-items-center justify-content-center"
+                                       title="Lihat Detail" style="width: 30px; height: 30px; padding: 0; border-color: rgba(255,255,255,0.15);">
+                                        <i class="fas fa-eye" style="font-size: 0.75rem;"></i>
+                                    </a>
+
+                                    {{-- Print Invoice --}}
+                                    <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank"
+                                       class="btn btn-sm btn-outline-info rounded-circle d-flex align-items-center justify-content-center"
+                                       title="Cetak Invoice" style="width: 30px; height: 30px; padding: 0; border-color: rgba(13,202,240,0.3);">
+                                        <i class="fas fa-print" style="font-size: 0.75rem;"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -238,4 +346,15 @@
         color: var(--primary);
     }
 </style>
+
+<script>
+    function exportReport() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData).toString();
+        const exportUrl = "{{ route('admin.orders.export') }}?" + params;
+        
+        window.open(exportUrl, '_blank');
+    }
+</script>
 @endsection

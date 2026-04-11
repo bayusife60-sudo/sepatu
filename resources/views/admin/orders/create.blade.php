@@ -1,32 +1,36 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container-fluid" style="max-width: 860px;">
+<div class="container-fluid" style="max-width: 1000px;">
 
     {{-- Page Header --}}
     <div class="row mb-5 align-items-end">
         <div class="col-md-8">
             <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Buat Order Baru</h2>
-            <p class="text-muted mt-2 mb-0" style="font-weight: 300;">Isi detail order di bawah ini dengan lengkap.</p>
+            <p class="text-white-50 mt-2 mb-0" style="font-weight: 300;">Manajemen input order multi-item dengan kalkulasi otomatis.</p>
         </div>
         <div class="col-md-4 text-md-end mt-4 mt-md-0">
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-custom" style="padding: 0.6rem 1.5rem;">
+            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-custom" style="padding: 0.6rem 1.5rem; border-radius: 12px;">
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
         </div>
     </div>
 
-    @if($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert"
-         style="background-color: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3); color: #fca5a5; border-radius: 8px;">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <strong>Terdapat kesalahan:</strong>
-        <ul class="mb-0 mt-1 ps-3">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+    @if($errors->any() || session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 border-0 shadow-sm" role="alert"
+         style="background: rgba(220, 38, 38, 0.1); color: #fca5a5; border-left: 4px solid #ef4444 !important; border-radius: 12px;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-3 fa-lg"></i>
+            <div>
+                <strong>Oops!</strong> {{ session('error') ?: 'Terdapat beberapa kesalahan input:' }}
+                @if($errors->any())
+                <ul class="mb-0 mt-1 small">
+                    @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                </ul>
+                @endif
+            </div>
+        </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
     </div>
     @endif
@@ -34,456 +38,365 @@
     <form action="{{ route('admin.orders.store') }}" method="POST" id="orderForm">
         @csrf
 
-        {{-- Informasi Pelanggan --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0" style="font-size: 1rem; font-family: 'Jost', sans-serif; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-user me-2" style="color: var(--primary); opacity: 0.8;"></i>Informasi Pelanggan
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="customer_id" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Pilih Akun Pelanggan</label>
-                        <select name="customer_id" id="customer_id" class="form-select" required
-                                style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                            <option value="">-- Pilih Pelanggan --</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}"
-                                        data-name="{{ $customer->name }}"
-                                        {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                    {{ $customer->name }} &mdash; {{ $customer->email }}
-                                </option>
-                            @endforeach
-                        </select>
+        <div class="row g-4">
+            {{-- KIRI: Pelanggan & Items --}}
+            <div class="col-lg-8">
+                
+                {{-- Data Pelanggan --}}
+                <div class="card mb-4 border-0 shadow-sm" style="background: rgba(255,255,255,0.03); border-radius: 16px;">
+                    <div class="card-header bg-transparent border-white-5 py-3 px-4">
+                        <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-user-circle text-primary"></i> Informasi Pelanggan
+                        </h5>
                     </div>
-                    <div class="col-md-6">
-                        <label for="customer_name" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">
-                            Nama Pelanggan
-                            <span class="text-muted fw-normal" style="text-transform: none; letter-spacing: 0;">(otomatis terisi)</span>
-                        </label>
-                        <input type="text" name="customer_name" id="customer_name" class="form-control"
-                               placeholder="Nama pelanggan..."
-                               value="{{ old('customer_name') }}"
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                        <small class="text-muted" style="font-size: 0.72rem;">Bisa diedit manual jika perlu.</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Detail Sepatu --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0" style="font-size: 1rem; font-family: 'Jost', sans-serif; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-shoe-prints me-2" style="color: var(--primary); opacity: 0.8;"></i>Detail Sepatu
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="shoe_brand" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Merek Sepatu</label>
-                        <input type="text" name="shoe_brand" id="shoe_brand" class="form-control"
-                               placeholder="Contoh: Nike, Adidas, Vans..."
-                               value="{{ old('shoe_brand') }}" required
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="shoe_type" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Tipe Sepatu</label>
-                        <input type="text" name="shoe_type" id="shoe_type" class="form-control"
-                               placeholder="Contoh: Sneakers, Boots, Loafers..."
-                               value="{{ old('shoe_type') }}" required
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Pilih Akun</label>
+                                <select name="customer_id" id="customer_id" class="form-select select2-dark" required>
+                                    <option value="">-- Cari Pelanggan --</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}" 
+                                                data-name="{{ $customer->name }}"
+                                                data-phone="{{ $customer->phone }}"
+                                                {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                                            {{ $customer->name }} ({{ $customer->email }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Nama Display</label>
+                                <input type="text" name="customer_name" id="customer_name" class="form-control" 
+                                       placeholder="Nama pada nota..." value="{{ old('customer_name') }}">
+                            </div>
+                            <div class="col-md-12 mt-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Nomor WhatsApp</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-white-10 text-white-50"><i class="fab fa-whatsapp"></i></span>
+                                    <input type="text" name="customer_phone" id="customer_phone" class="form-control" 
+                                           placeholder="081234567..." value="{{ old('customer_phone') }}">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- Jenis Treatment --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0" style="font-size: 1rem; font-family: 'Jost', sans-serif; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-spray-can me-2" style="color: var(--primary); opacity: 0.8;"></i>Jenis Treatment
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="mb-2">
-                    <label class="form-label text-muted small text-uppercase fw-bold d-block mb-3" style="letter-spacing: 1px; font-size: 0.75rem;">Pilih Layanan</label>
-                    <div class="row g-3" id="treatmentOptions">
-                        @forelse($treatments as $treatment)
-                        <div class="col-md-6">
-                            <label class="d-block treatment-card" for="treatment_{{ $treatment->id }}"
-                                   data-price="{{ $treatment->price }}"
-                                   style="cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; transition: all 0.3s ease;">
-                                <input type="radio" name="treatment_id" id="treatment_{{ $treatment->id }}"
-                                       value="{{ $treatment->id }}"
-                                       class="d-none treatment-radio"
-                                       {{ old('treatment_id') == $treatment->id ? 'checked' : '' }} required>
-                                <div class="d-flex align-items-start">
-                                    <div class="me-3 mt-1" style="width: 36px; height: 36px; background: rgba(244,114,182,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                        <i class="fas fa-spray-can" style="color: var(--primary); font-size: 0.95rem;"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="d-block text-white fw-medium" style="font-size: 0.95rem;">{{ $treatment->name }}</span>
-                                            <span class="text-primary fw-bold ms-2" style="white-space: nowrap; font-size: 0.9rem;">
-                                                Rp {{ number_format($treatment->price, 0, ',', '.') }}
-                                            </span>
-                                        </div>
-                                        <span class="d-block text-muted small mt-1" style="font-size: 0.78rem;">{{ Str::limit($treatment->description, 60) }}</span>
+                {{-- Daftar Sepatu (REPEATER) --}}
+                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.03); border-radius: 16px;">
+                    <div class="card-header bg-transparent border-white-5 py-3 px-4 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-shoe-prints text-primary"></i> Daftar Sepatu
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="addItemBtn">
+                            <i class="fas fa-plus me-1"></i> Tambah Sepatu
+                        </button>
+                    </div>
+                    <div class="card-body p-0" id="itemContainer">
+                        {{-- Items will be injected here --}}
+                        @php $oldItems = old('items', [[]]); @endphp
+                        @foreach($oldItems as $index => $oldItem)
+                        <div class="item-row p-4 border-bottom border-white-5 position-relative">
+                            @if($index > 0)
+                            <button type="button" class="btn-remove-item btn btn-sm btn-danger rounded-circle position-absolute top-0 end-0 mt-3 me-3" style="width: 24px; height: 24px; padding: 0;">&times;</button>
+                            @endif
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label text-white-50 small">Merek Sepatu</label>
+                                    <input type="text" name="items[{{ $index }}][shoe_brand]" class="form-control" placeholder="Contoh: Nike" value="{{ $oldItem['shoe_brand'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-white-50 small">Material</label>
+                                    <input type="text" name="items[{{ $index }}][shoe_material]" class="form-control" placeholder="Contoh: Canvas/Suede" value="{{ $oldItem['shoe_material'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-white-50 small">Warna</label>
+                                    <input type="text" name="items[{{ $index }}][shoe_color]" class="form-control" placeholder="Contoh: Putih" value="{{ $oldItem['shoe_color'] ?? '' }}" required>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label text-white-50 small">Jenis Treatment</label>
+                                    <select name="items[{{ $index }}][treatment_id]" class="form-select treatment-select" required>
+                                        <option value="">-- Pilih Treatment --</option>
+                                        @foreach($treatments as $t)
+                                            <option value="{{ $t->id }}" data-price="{{ $t->price }}" {{ (isset($oldItem['treatment_id']) && $oldItem['treatment_id'] == $t->id) ? 'selected' : '' }}>
+                                                {{ $t->name }} (Rp {{ number_format($t->price, 0, ',', '.') }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-white-50 small">Harga</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-white-10 text-white-50">Rp</span>
+                                        <input type="number" name="items[{{ $index }}][price]" class="form-control item-price" value="{{ $oldItem['price'] ?? 0 }}" required min="0">
                                     </div>
                                 </div>
-                            </label>
-                        </div>
-                        @empty
-                        <div class="col-12">
-                            <div class="p-4 text-center rounded" style="border: 1px dashed rgba(255,255,255,0.1);">
-                                <i class="fas fa-spray-can fa-2x mb-2 text-muted" style="opacity: 0.3;"></i>
-                                <p class="text-muted mb-0">Belum ada layanan treatment aktif. Tambahkan melalui menu <strong>Layanan Treatment</strong> terlebih dahulu.</p>
                             </div>
                         </div>
-                        @endforelse
+                        @endforeach
                     </div>
                 </div>
+
             </div>
-        </div>
 
-        {{-- Metode Layanan --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0" style="font-size: 1rem; font-family: 'Jost', sans-serif; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-truck me-2" style="color: var(--primary); opacity: 0.8;"></i>Metode Layanan
-                </h5>
-            </div>
-            <div class="card-body p-4">
-
-                <div class="row g-3 mb-4" id="serviceOptions">
-                    {{-- Datang ke Toko --}}
-                    <div class="col-md-4">
-                        <label class="d-block service-card h-100" for="method_langsung"
-                               style="cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.2rem; transition: all 0.3s ease; text-align: center;">
-                            <input type="radio" name="service_method" id="method_langsung" value="datang_langsung"
-                                   class="d-none service-radio" {{ old('service_method', 'datang_langsung') == 'datang_langsung' ? 'checked' : '' }} required>
-                            <div class="mb-2" style="width: 48px; height: 48px; background: rgba(244,114,182,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin: 0 auto;">
-                                <i class="fas fa-store-alt" style="font-size: 1.2rem; color: var(--primary);"></i>
-                            </div>
-                            <span class="d-block text-white fw-medium mt-2" style="font-size: 0.95rem;">Datang ke Toko</span>
-                            <span class="text-success small fw-medium">Gratis</span>
-                            <p class="text-muted mt-1 mb-0" style="font-size: 0.75rem;">Pelanggan mengantar & mengambil sendiri</p>
-                        </label>
+            {{-- KANAN: Logistik & Pembayaran --}}
+            <div class="col-lg-4">
+                
+                {{-- Metode & Jadwal --}}
+                <div class="card mb-4 border-0 shadow-sm" style="background: rgba(255,255,255,0.03); border-radius: 16px;">
+                    <div class="card-header bg-transparent border-white-5 py-3 px-4">
+                        <h5 class="mb-0 fs-6 fw-bold text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-truck text-primary"></i> Logistik
+                        </h5>
                     </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small d-block mb-3">Metode Pelayanan</label>
+                            <div class="d-flex flex-column gap-2">
+                                <label class="service-option p-3 rounded-3 border border-white-10 cursor-pointer d-flex align-items-center gap-3">
+                                    <input type="radio" name="service_method" value="datang_langsung" {{ old('service_method', 'datang_langsung') == 'datang_langsung' ? 'checked' : '' }} class="form-check-input mt-0">
+                                    <div>
+                                        <div class="text-white fw-bold small">Datang Langsung</div>
+                                        <div class="text-white-50" style="font-size: 0.75rem;">Antar & ambil di toko</div>
+                                    </div>
+                                </label>
+                                <label class="service-option p-3 rounded-3 border border-white-10 cursor-pointer d-flex align-items-center gap-3">
+                                    <input type="radio" name="service_method" value="pickup_delivery" {{ old('service_method') == 'pickup_delivery' ? 'checked' : '' }} class="form-check-input mt-0">
+                                    <div>
+                                        <div class="text-white fw-bold small">Pickup & Delivery</div>
+                                        <div class="text-white-50" style="font-size: 0.75rem;">Jemput & antar ke rumah (+40k)</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
 
-                    {{-- Pickup --}}
-                    <div class="col-md-4">
-                        <label class="d-block service-card h-100" for="method_pickup"
-                               style="cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.2rem; transition: all 0.3s ease; text-align: center;">
-                            <input type="radio" name="service_method" id="method_pickup" value="pickup"
-                                   class="d-none service-radio" {{ old('service_method') == 'pickup' ? 'checked' : '' }}>
-                            <div class="mb-2" style="width: 48px; height: 48px; background: rgba(244,114,182,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin: 0 auto;">
-                                <i class="fas fa-box-open" style="font-size: 1.2rem; color: var(--primary);"></i>
+                        <div id="logisticFields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label text-white-50 small">Alamat Lengkap</label>
+                                <textarea name="pickup_address" class="form-control" rows="2" placeholder="Jl. Contoh No. 123...">{{ old('pickup_address') }}</textarea>
                             </div>
-                            <span class="d-block text-white fw-medium mt-2" style="font-size: 0.95rem;">Pickup</span>
-                            <span class="text-warning small fw-medium">+ Rp 40.000</span>
-                            <p class="text-muted mt-1 mb-0" style="font-size: 0.75rem;">Kami menjemput sepatu ke alamat pelanggan</p>
-                        </label>
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white-50 small">Jadwal Penjemputan</label>
+                                <input type="datetime-local" name="pickup_date" class="form-control" value="{{ old('pickup_date') }}">
+                            </div>
+                        </div>
 
-                    {{-- Delivery --}}
-                    <div class="col-md-4">
-                        <label class="d-block service-card h-100" for="method_delivery"
-                               style="cursor: pointer; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.2rem; transition: all 0.3s ease; text-align: center;">
-                            <input type="radio" name="service_method" id="method_delivery" value="delivery"
-                                   class="d-none service-radio" {{ old('service_method') == 'delivery' ? 'checked' : '' }}>
-                            <div class="mb-2" style="width: 48px; height: 48px; background: rgba(244,114,182,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center; margin: 0 auto;">
-                                <i class="fas fa-truck" style="font-size: 1.2rem; color: var(--primary);"></i>
-                            </div>
-                            <span class="d-block text-white fw-medium mt-2" style="font-size: 0.95rem;">Delivery</span>
-                            <span class="text-warning small fw-medium">+ Rp 40.000</span>
-                            <p class="text-muted mt-1 mb-0" style="font-size: 0.75rem;">Kami mengantar sepatu ke alamat pelanggan</p>
-                        </label>
-                    </div>
-                </div>
+                        <hr class="my-4 border-white-5">
 
-                {{-- Detail Pickup (conditional) --}}
-                <div id="pickupSection" style="display: none;">
-                    <div class="p-3 rounded" style="background-color: rgba(244,114,182,0.05); border: 1px dashed rgba(244,114,182,0.3);">
-                        <p class="text-primary small mb-3 fw-medium"><i class="fas fa-map-marker-alt me-2"></i>Detail Jadwal Pickup</p>
-                        <div class="row g-3">
-                            <div class="col-md-7">
-                                <label for="pickup_address" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Alamat Penjemputan <span class="text-danger">*</span></label>
-                                <textarea name="pickup_address" id="pickup_address" rows="3" class="form-control"
-                                          placeholder="Alamat lengkap untuk penjemputan sepatu..."
-                                          style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem; resize: none;">{{ old('pickup_address') }}</textarea>
-                            </div>
-                            <div class="col-md-5">
-                                <label for="pickup_date" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Tanggal & Waktu Pickup <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="pickup_date" id="pickup_date" class="form-control"
-                                       value="{{ old('pickup_date') }}"
-                                       style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                            </div>
+                        <div class="mb-0">
+                            <label class="form-label text-white-50 small">Estimasi Selesai</label>
+                            <input type="datetime-local" name="estimated_completion" class="form-control" value="{{ old('estimated_completion') }}">
                         </div>
                     </div>
                 </div>
 
-                {{-- Detail Delivery (conditional) --}}
-                <div id="deliverySection" style="display: none;">
-                    <div class="p-3 rounded" style="background-color: rgba(59,130,246,0.05); border: 1px dashed rgba(59,130,246,0.3);">
-                        <p class="text-info small mb-3 fw-medium"><i class="fas fa-map-marked-alt me-2"></i>Detail Jadwal Pengiriman</p>
-                        <div class="row g-3">
-                            <div class="col-md-7">
-                                <label for="delivery_address" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Alamat Pengiriman <span class="text-danger">*</span></label>
-                                <textarea name="delivery_address" id="delivery_address" rows="3" class="form-control"
-                                          placeholder="Alamat lengkap untuk pengiriman sepatu..."
-                                          style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem; resize: none;">{{ old('delivery_address') }}</textarea>
-                            </div>
-                            <div class="col-md-5">
-                                <label for="delivery_date" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Tanggal & Waktu Pengiriman <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="delivery_date" id="delivery_date" class="form-control"
-                                       value="{{ old('delivery_date') }}"
-                                       style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                            </div>
+                {{-- Total & Simpan --}}
+                <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(244,114,182,0.1) 0%, rgba(244,114,182,0.02) 100%); border-radius: 16px; border: 1px solid rgba(244,114,182,0.2) !important;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-white-50 small">Subtotal Treatment</span>
+                            <span class="text-white fw-bold" id="subtotalText">Rp 0</span>
                         </div>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="text-white-50 small">Biaya Logistik</span>
+                            <span class="text-white fw-bold" id="logisticFeeText">Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-white fw-bold fs-5">TOTAL</span>
+                            <span class="text-primary fw-bold fs-4" id="totalPriceText">Rp 0</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">Status Pembayaran</label>
+                            <select name="payment_status" class="form-select bg-dark">
+                                <option value="belum_lunas" {{ old('payment_status') == 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
+                                <option value="lunas" {{ old('payment_status') == 'lunas' ? 'selected' : '' }}>Lunas</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small">Metode Bayar</label>
+                            <input type="text" name="payment_method" class="form-control" placeholder="Transfer/Tunai/QRIS" value="{{ old('payment_method') }}">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg" id="submitBtn">
+                            SIMPAN ORDER
+                        </button>
                     </div>
                 </div>
 
             </div>
         </div>
 
-        {{-- Pembayaran & Estimasi --}}
-        <div class="card mb-5">
-            <div class="card-header">
-                <h5 class="mb-0" style="font-size: 1rem; font-family: 'Jost', sans-serif; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-credit-card me-2" style="color: var(--primary); opacity: 0.8;"></i>Pembayaran & Estimasi
-                </h5>
-            </div>
-            <div class="card-body p-4">
-
-                {{-- Ringkasan Harga --}}
-                <div class="p-3 rounded mb-4" id="priceSummaryBox"
-                     style="background-color: rgba(244,114,182,0.05); border: 1px solid rgba(244,114,182,0.15);">
-                    <p class="text-muted small text-uppercase fw-bold mb-2" style="letter-spacing: 1px; font-size: 0.72rem;"><i class="fas fa-calculator me-1"></i>Ringkasan Harga</p>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted small">Harga Treatment</span>
-                        <span class="text-white small" id="summaryTreatmentPrice">Rp 0</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1" id="pickupFeeRow" style="display: none !important;">
-                        <span class="text-muted small">Biaya Pickup</span>
-                        <span class="text-white small">Rp 40.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1" id="deliveryFeeRow" style="display: none !important;">
-                        <span class="text-muted small">Biaya Delivery</span>
-                        <span class="text-white small">Rp 40.000</span>
-                    </div>
-                    <hr style="border-color: rgba(255,255,255,0.1); margin: 0.5rem 0;">
-                    <div class="d-flex justify-content-between">
-                        <span class="text-white fw-medium small">Total</span>
-                        <span class="text-primary fw-bold" id="summaryTotal">Rp 0</span>
-                    </div>
-                </div>
-
-                <div class="row g-3">
-                    {{-- Harga Treatment --}}
-                    <div class="col-md-4">
-                        <label for="price" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Harga Treatment (Rp)</label>
-                        <input type="number" name="price" id="price" class="form-control"
-                               placeholder="0"
-                               value="{{ old('price', 0) }}" required min="0"
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                        <small class="text-muted" style="font-size: 0.72rem;">Otomatis terisi saat pilih treatment.</small>
-                    </div>
-
-                    {{-- Metode Pembayaran --}}
-                    <div class="col-md-4">
-                        <label for="payment_method" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Metode Pembayaran</label>
-                        <input type="text" name="payment_method" id="payment_method" class="form-control"
-                               placeholder="Transfer, Tunai, QRIS..."
-                               value="{{ old('payment_method') }}"
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                    </div>
-
-                    {{-- Status Pembayaran --}}
-                    <div class="col-md-4">
-                        <label for="payment_status" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Status Pembayaran</label>
-                        <select name="payment_status" id="payment_status" class="form-select" required
-                                style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                            <option value="belum_lunas" {{ old('payment_status', 'belum_lunas') == 'belum_lunas' ? 'selected' : '' }}>Belum Lunas</option>
-                            <option value="lunas" {{ old('payment_status') == 'lunas' ? 'selected' : '' }}>Lunas</option>
-                        </select>
-                    </div>
-
-                    {{-- Estimasi Selesai --}}
-                    <div class="col-md-12">
-                        <label for="estimated_completion" class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Estimasi Selesai</label>
-                        <input type="datetime-local" name="estimated_completion" id="estimated_completion" class="form-control"
-                               value="{{ old('estimated_completion') }}"
-                               style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: #e0e0e0; border-radius: 6px; padding: 0.7rem 1rem;">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Submit --}}
-        <div class="d-flex justify-content-end gap-3 mb-4">
-            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-custom" style="padding: 0.7rem 2rem;">
-                Batal
-            </a>
-            <button type="submit" class="btn btn-primary" style="padding: 0.7rem 2.5rem;" id="submitBtn">
-                <i class="fas fa-check me-2"></i>Simpan Order
-            </button>
-        </div>
     </form>
 </div>
 
+{{-- TEMPLATE FOR REPEATER ITEM --}}
+<template id="itemTemplate">
+    <div class="item-row p-4 border-bottom border-white-5 position-relative" style="display: none;">
+        <button type="button" class="btn-remove-item btn btn-sm btn-danger rounded-circle position-absolute top-0 end-0 mt-3 me-3" style="width: 24px; height: 24px; padding: 0;">&times;</button>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label text-white-50 small">Merek Sepatu</label>
+                <input type="text" name="items[INDEX][shoe_brand]" class="form-control" placeholder="Contoh: Nike" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-white-50 small">Material</label>
+                <input type="text" name="items[INDEX][shoe_material]" class="form-control" placeholder="Contoh: Canvas/Suede" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-white-50 small">Warna</label>
+                <input type="text" name="items[INDEX][shoe_color]" class="form-control" placeholder="Contoh: Putih" required>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label text-white-50 small">Jenis Treatment</label>
+                <select name="items[INDEX][treatment_id]" class="form-select treatment-select" required>
+                    <option value="">-- Pilih Treatment --</option>
+                    @foreach($treatments as $t)
+                        <option value="{{ $t->id }}" data-price="{{ $t->price }}">{{ $t->name }} (Rp {{ number_format($t->price, 0, ',', '.') }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-white-50 small">Harga</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-white-10 text-white-50">Rp</span>
+                    <input type="number" name="items[INDEX][price]" class="form-control item-price" value="0" required min="0">
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
 <style>
-    .form-control::placeholder { color: #555; }
+    .form-control, .form-select {
+        background-color: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+    }
     .form-control:focus, .form-select:focus {
-        background-color: #2a2a2a !important;
-        border-color: rgba(244, 114, 182, 0.5) !important;
-        color: #e0e0e0 !important;
-        box-shadow: 0 0 0 0.2rem rgba(244, 114, 182, 0.1) !important;
+        background-color: rgba(255,255,255,0.08);
+        border-color: var(--primary);
+        color: #fff;
+        box-shadow: none;
     }
-    .form-select option { background-color: #2a2a2a; }
-    input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
-
-    .treatment-card:has(.treatment-radio:checked) {
+    .form-control::placeholder { color: rgba(255,255,255,0.3); }
+    
+    .service-option { transition: all 0.2s; position: relative; }
+    .service-option:hover { background: rgba(255,255,255,0.05); }
+    .service-option:has(input:checked) {
         border-color: var(--primary) !important;
-        background-color: rgba(244, 114, 182, 0.07);
-        box-shadow: 0 0 0 1px var(--primary);
+        background: rgba(244,114,182,0.05);
     }
-    .treatment-card:hover {
-        border-color: rgba(244, 114, 182, 0.4) !important;
-    }
-
-    .service-card:has(.service-radio:checked) {
-        border-color: var(--primary) !important;
-        background-color: rgba(244, 114, 182, 0.07);
-        box-shadow: 0 0 0 1px var(--primary);
-    }
-    .service-card:hover {
-        border-color: rgba(244, 114, 182, 0.4) !important;
-    }
+    .cursor-pointer { cursor: pointer; }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
+    let itemIndex = {{ count($oldItems) }};
+    const container = document.getElementById('itemContainer');
+    const template = document.getElementById('itemTemplate');
+    const addBtn = document.getElementById('addItemBtn');
 
-    // ── Auto-fill nama pelanggan ──
-    const customerSelect = document.getElementById('customer_id');
-    const customerNameInput = document.getElementById('customer_name');
+    // Add Item
+    addBtn.addEventListener('click', () => {
+        const clone = template.content.cloneNode(true).querySelector('.item-row');
+        clone.innerHTML = clone.innerHTML.replace(/INDEX/g, itemIndex);
+        clone.style.display = 'block';
+        container.appendChild(clone);
+        itemIndex++;
+        updateTotals();
+    });
 
-    customerSelect.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const name = selectedOption.getAttribute('data-name') || '';
-        if (!customerNameInput.value || customerNameInput.dataset.autoFilled === 'true') {
-            customerNameInput.value = name;
-            customerNameInput.dataset.autoFilled = 'true';
+    // Remove Item
+    container.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-remove-item')) {
+            e.target.closest('.item-row').remove();
+            updateTotals();
         }
     });
 
-    customerNameInput.addEventListener('input', function () {
-        customerNameInput.dataset.autoFilled = 'false';
-    });
-
-    if (customerSelect.value) {
-        const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-        if (!customerNameInput.value) {
-            customerNameInput.value = selectedOption.getAttribute('data-name') || '';
-            customerNameInput.dataset.autoFilled = 'true';
-        }
-    }
-
-    // ── Harga & ringkasan ──
-    const priceInput          = document.getElementById('price');
-    const summaryTreatment    = document.getElementById('summaryTreatmentPrice');
-    const summaryTotal        = document.getElementById('summaryTotal');
-    const pickupFeeRow        = document.getElementById('pickupFeeRow');
-    const deliveryFeeRow      = document.getElementById('deliveryFeeRow');
-
-    function formatRupiah(num) {
-        return 'Rp ' + parseInt(num || 0).toLocaleString('id-ID');
-    }
-
-    function updateSummary() {
-        const price = parseInt(priceInput.value) || 0;
-        const method = document.querySelector('input[name="service_method"]:checked')?.value;
-        const pickupFee   = (method === 'pickup')   ? 40000 : 0;
-        const deliveryFee = (method === 'delivery')  ? 40000 : 0;
-        const total = price + pickupFee + deliveryFee;
-
-        summaryTreatment.textContent = formatRupiah(price);
-        summaryTotal.textContent     = formatRupiah(total);
-
-        pickupFeeRow.style.display   = (pickupFee > 0)   ? 'flex' : 'none';
-        deliveryFeeRow.style.display = (deliveryFee > 0) ? 'flex' : 'none';
-    }
-
-    // Auto-isi harga dari treatment
-    document.querySelectorAll('.treatment-radio').forEach(function (radio) {
-        radio.addEventListener('change', function () {
-            const card = this.closest('.treatment-card');
-            const price = card.getAttribute('data-price') || 0;
+    // Update Price on Treatment Change
+    container.addEventListener('change', (e) => {
+        if (e.target.classList.contains('treatment-select')) {
+            const price = e.target.options[e.target.selectedIndex].dataset.price || 0;
+            const priceInput = e.target.closest('.item-row').querySelector('.item-price');
             priceInput.value = price;
-            updateSummary();
-        });
+            updateTotals();
+        }
     });
 
-    priceInput.addEventListener('input', updateSummary);
-
-    // ── Toggle Pickup / Delivery Section ──
-    const pickupSection   = document.getElementById('pickupSection');
-    const deliverySection = document.getElementById('deliverySection');
-    const pickupAddress   = document.getElementById('pickup_address');
-    const pickupDate      = document.getElementById('pickup_date');
-    const deliveryAddress = document.getElementById('delivery_address');
-    const deliveryDate    = document.getElementById('delivery_date');
-
-    function toggleServiceSections() {
-        const method = document.querySelector('input[name="service_method"]:checked')?.value;
-
-        if (method === 'pickup') {
-            pickupSection.style.display   = 'block';
-            deliverySection.style.display = 'none';
-            pickupAddress.setAttribute('required', 'required');
-            pickupDate.setAttribute('required', 'required');
-            deliveryAddress.removeAttribute('required');
-            deliveryDate.removeAttribute('required');
-        } else if (method === 'delivery') {
-            pickupSection.style.display   = 'none';
-            deliverySection.style.display = 'block';
-            deliveryAddress.setAttribute('required', 'required');
-            deliveryDate.setAttribute('required', 'required');
-            pickupAddress.removeAttribute('required');
-            pickupDate.removeAttribute('required');
-        } else {
-            pickupSection.style.display   = 'none';
-            deliverySection.style.display = 'none';
-            pickupAddress.removeAttribute('required');
-            pickupDate.removeAttribute('required');
-            deliveryAddress.removeAttribute('required');
-            deliveryDate.removeAttribute('required');
+    // Update Totals on Price Change
+    container.addEventListener('input', (e) => {
+        if (e.target.classList.contains('item-price')) {
+            updateTotals();
         }
+    });
 
-        updateSummary();
+    // Logistics Toggle
+    const serviceRadios = document.querySelectorAll('input[name="service_method"]');
+    const logisticFields = document.getElementById('logisticFields');
+
+    function updateLogistics() {
+        const selected = document.querySelector('input[name="service_method"]:checked').value;
+        logisticFields.style.display = (selected === 'pickup_delivery') ? 'block' : 'none';
+        updateTotals();
     }
 
-    document.querySelectorAll('.service-radio').forEach(r => r.addEventListener('change', toggleServiceSections));
-    toggleServiceSections();
+    serviceRadios.forEach(r => r.addEventListener('change', updateLogistics));
+    updateLogistics();
 
-    // Trigger harga dari old() value jika ada
-    const checkedTreatment = document.querySelector('.treatment-radio:checked');
-    if (checkedTreatment) {
-        const card = checkedTreatment.closest('.treatment-card');
-        if (card && !priceInput.value) {
-            priceInput.value = card.getAttribute('data-price') || 0;
-        }
+    // Calculate Final Totals
+    function updateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('.item-price').forEach(input => {
+            subtotal += parseFloat(input.value || 0);
+        });
+
+        const method = document.querySelector('input[name="service_method"]:checked').value;
+        const logisticFee = (method === 'pickup_delivery') ? 40000 : 0;
+        const total = subtotal + logisticFee;
+
+        document.getElementById('subtotalText').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+        document.getElementById('logisticFeeText').innerText = 'Rp ' + logisticFee.toLocaleString('id-ID');
+        document.getElementById('totalPriceText').innerText = 'Rp ' + total.toLocaleString('id-ID');
     }
-    updateSummary();
 
-    // ── Submit loading state ──
-    document.getElementById('orderForm').addEventListener('submit', function () {
+    // Customer Auto-Fill
+    const customerSelect = document.getElementById('customer_id');
+    const customerName = document.getElementById('customer_name');
+    const customerPhone = document.getElementById('customer_phone');
+
+    customerSelect.addEventListener('change', () => {
+        const option = customerSelect.options[customerSelect.selectedIndex];
+        const name = option.dataset.name || '';
+        const phone = option.dataset.phone || '';
+
+        // Auto-fill name if empty or previously auto-filled
+        if (!customerName.value || customerName.dataset.auto === 'true') {
+            customerName.value = name;
+            customerName.dataset.auto = 'true';
+        }
+
+        // Auto-fill phone if empty or previously auto-filled
+        if (!customerPhone.value || customerPhone.dataset.auto === 'true') {
+            customerPhone.value = phone;
+            customerPhone.dataset.auto = 'true';
+        }
+    });
+
+    customerName.addEventListener('input', () => customerName.dataset.auto = 'false');
+    customerPhone.addEventListener('input', () => customerPhone.dataset.auto = 'false');
+
+    // Initial calculation
+    updateTotals();
+
+    // Loading State
+    document.getElementById('orderForm').addEventListener('submit', () => {
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+        btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2"></span>MENYIMPAN...';
     });
 });
 </script>

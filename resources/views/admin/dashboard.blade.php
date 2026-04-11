@@ -5,7 +5,7 @@
     <!-- Page Header -->
     <div class="row mb-5 align-items-end">
         <div class="col-md-8">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.5rem;">Dashboard Operasional</h2>
             <p class="text-muted mt-2 mb-0" style="font-weight: 300;">Ringkasan aktivitas hari ini, {{ now()->translatedFormat('d F Y') }}</p>
         </div>
@@ -74,6 +74,27 @@
                     <p class="text-muted small mb-0">Sepatu siap dikirim kembali</p>
                     
                     <i class="fas fa-box-open position-absolute text-white" style="font-size: 10rem; opacity: 0.02; bottom: -20px; right: -20px; transform: rotate(-15deg);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Performance Chart -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(145deg, #1a1a1a 0%, #111111 100%);">
+                <div class="card-header border-bottom border-white-5 bg-transparent py-4 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1" style="font-size: 1.25rem; font-weight: 600;">{{ Auth::user()->role == 'owner' ? 'Performa Keuangan' : 'Volume Pekerjaan' }}</h4>
+                        <p class="text-muted small mb-0">{{ Auth::user()->role == 'owner' ? 'Perbandingan Pendapatan vs Pengeluaran' : 'Statistik Jumlah Sepatu Masuk' }}</p>
+                    </div>
+                    <div class="btn-group" role="group" style="background: rgba(255,255,255,0.05); padding: 4px; border-radius: 12px;">
+                        <button type="button" class="btn btn-sm px-3 chart-toggle active" id="toggleDaily" onclick="updateChart('daily')">Harian</button>
+                        <button type="button" class="btn btn-sm px-3 chart-toggle" id="toggleMonthly" onclick="updateChart('monthly')">Bulanan</button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div id="financialChart" style="min-height: 350px;"></div>
                 </div>
             </div>
         </div>
@@ -158,4 +179,202 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    const chartData = @json($chartData);
+    let chart;
+
+    const options = {
+        series: [
+            @if(Auth::user()->role == 'owner')
+            {
+                name: 'Pendapatan',
+                type: 'area',
+                data: chartData.daily.revenue
+            }, {
+                name: 'Pengeluaran',
+                type: 'area',
+                data: chartData.daily.expenses
+            },
+            @endif
+            {
+                name: 'Sepatu Masuk',
+                type: 'column',
+                data: chartData.daily.shoes
+            }
+        ],
+        chart: {
+            height: 380,
+            type: 'line', // Mixed chart
+            stacked: false,
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            background: 'transparent',
+            foreColor: '#a0a0a0'
+        },
+        colors: [
+            @if(Auth::user()->role == 'owner')
+            '#f472b6', '#3b82f6', 
+            @endif
+            '#fb923c'
+        ],
+        dataLabels: { enabled: false },
+        stroke: { 
+            curve: 'smooth', 
+            width: [
+                @if(Auth::user()->role == 'owner')
+                3, 3, 0
+                @else
+                0
+                @endif
+            ] 
+        },
+        fill: {
+            type: [
+                @if(Auth::user()->role == 'owner')
+                'gradient', 'gradient', 'solid'
+                @else
+                'solid'
+                @endif
+            ],
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [20, 100, 100, 100]
+            }
+        },
+        xaxis: {
+            categories: chartData.daily.labels,
+            type: 'category',
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            tooltip: { enabled: false }
+        },
+        yaxis: [
+            @if(Auth::user()->role == 'owner')
+            {
+                // Left Axis (Revenue/Expenses)
+                seriesName: 'Pendapatan',
+                axisTicks: { show: false },
+                axisBorder: { show: false },
+                labels: {
+                    style: { colors: '#f472b6' },
+                    formatter: function (val) {
+                        return "Rp " + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    }
+                },
+                title: { text: "Rupiah", style: { color: '#f472b6' } }
+            },
+            {
+                // Proxy for Expenses
+                show: false,
+                seriesName: 'Pengeluaran',
+            },
+            @endif
+            {
+                // Right/Main Axis (Shoes)
+                opposite: {{ Auth::user()->role == 'owner' ? 'true' : 'false' }},
+                seriesName: 'Sepatu Masuk',
+                axisTicks: { show: false },
+                axisBorder: { show: false },
+                labels: {
+                    style: { colors: '#fb923c' },
+                    formatter: function (val) { return Math.floor(val) + " Pasang"; }
+                },
+                title: { text: "Jumlah Sepatu", style: { color: '#fb923c' } }
+            }
+        ],
+        grid: {
+            borderColor: 'rgba(255,255,255,0.05)',
+            strokeDashArray: 4
+        },
+        tooltip: {
+            theme: 'dark',
+            shared: true,
+            intersect: false,
+            y: {
+                formatter: function (val, { seriesIndex }) {
+                    if (seriesIndex === ({{ Auth::user()->role == 'owner' ? '2' : '0' }})) return val + " Pasang";
+                    return "Rp " + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+            }
+        },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'center',
+            offsetY: -10,
+            itemMargin: { horizontal: 15 }
+        },
+        plotOptions: {
+            bar: {
+                columnWidth: '35%',
+                borderRadius: 4
+            }
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        chart = new ApexCharts(document.querySelector("#financialChart"), options);
+        chart.render();
+    });
+
+    function updateChart(type) {
+        document.querySelectorAll('.chart-toggle').forEach(el => el.classList.remove('active'));
+        const labels = (type === 'daily') ? chartData.daily.labels : chartData.monthly.labels;
+        const revenue = (type === 'daily') ? chartData.daily.revenue : chartData.monthly.revenue;
+        const expenses = (type === 'daily') ? chartData.daily.expenses : chartData.monthly.expenses;
+        const shoes = (type === 'daily') ? chartData.daily.shoes : chartData.monthly.shoes;
+
+        if (type === 'daily') {
+            document.getElementById('toggleDaily').classList.add('active');
+        } else {
+            document.getElementById('toggleMonthly').classList.add('active');
+        }
+
+        chart.updateOptions({
+            xaxis: { categories: labels }
+        });
+        
+        chart.updateSeries([
+            @if(Auth::user()->role == 'owner')
+            {
+                name: 'Pendapatan',
+                type: 'area',
+                data: revenue
+            }, {
+                name: 'Pengeluaran',
+                type: 'area',
+                data: expenses
+            },
+            @endif
+            {
+                name: 'Sepatu Masuk',
+                type: 'column',
+                data: shoes
+            }
+        ]);
+    }
+</script>
+
+<style>
+    .chart-toggle {
+        border: none;
+        background: transparent;
+        color: #888;
+        border-radius: 8px !important;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .chart-toggle.active {
+        background: var(--primary) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(244, 114, 182, 0.2);
+    }
+    .chart-toggle:hover:not(.active) {
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+    }
+</style>
 @endsection

@@ -10,11 +10,13 @@
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Layanan Treatment</h2>
             <p class="text-muted mt-1 mb-0" style="font-weight: 300;">Manajemen jenis treatment dan layanannya.</p>
         </div>
+        @if(auth()->user()->role == 'owner')
         <div class="col-md-5 text-md-end mt-3 mt-md-0">
             <a href="{{ route('admin.treatments.create') }}" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
                 <i class="fas fa-plus me-2"></i>Tambah Treatment
             </a>
         </div>
+        @endif
     </div>
 
     {{-- Flash Message --}}
@@ -83,7 +85,9 @@
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px; width: 15%;">Harga</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px; width: 30%;">Deskripsi</th>
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px; width: 10%;">Status</th>
+                            @if(auth()->user()->role == 'owner')
                             <th class="py-3 px-4 fw-medium text-muted text-uppercase text-end" style="font-size: 0.75rem; letter-spacing: 1px; width: 15%;">Aksi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -106,6 +110,7 @@
                                     <span class="badge bg-secondary rounded-pill px-3 py-1" style="font-size: 0.75rem; font-weight: 500;">Nonaktif</span>
                                 @endif
                             </td>
+                            @if(auth()->user()->role == 'owner')
                             <td class="py-3 px-4 align-middle text-end">
                                 <a href="{{ route('admin.treatments.edit', $treatment) }}"
                                    class="btn btn-sm btn-outline-info rounded-circle me-1"
@@ -121,15 +126,18 @@
                                     </button>
                                 </form>
                             </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>
                             <td colspan="6" class="py-5 text-center text-muted">
                                 <i class="fas fa-spray-can fa-3x mb-3 d-block" style="opacity: 0.15;"></i>
                                 <p class="mb-2">Belum ada data treatment.</p>
+                                @if(auth()->user()->role == 'owner')
                                 <a href="{{ route('admin.treatments.create') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus me-1"></i>Tambah Treatment
                                 </a>
+                                @endif
                             </td>
                         </tr>
                         @endforelse

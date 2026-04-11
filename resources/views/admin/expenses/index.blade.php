@@ -10,8 +10,13 @@
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Data Pengeluaran</h2>
             <p class="text-muted mt-1 mb-0" style="font-weight: 300;">Manajemen data pengeluaran operasional toko.</p>
         </div>
-        <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <a href="{{ route('admin.expenses.create') }}" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
+        <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center gap-2">
+            @if(auth()->user()->role == 'owner')
+            <button type="button" class="btn btn-outline-info d-flex align-items-center" style="padding: 0.6rem 1.2rem; white-space: nowrap;" data-bs-toggle="modal" data-bs-target="#reportModal">
+                <i class="fas fa-file-invoice-dollar me-2"></i>Laporan Laba Rugi
+            </button>
+            @endif
+            <a href="{{ route('admin.expenses.create') }}" class="btn btn-primary d-flex align-items-center" style="padding: 0.6rem 1.5rem; white-space: nowrap;">
                 <i class="fas fa-plus me-2"></i>Catat Pengeluaran
             </a>
         </div>
@@ -224,6 +229,45 @@
     </div>
 
 </div>
+
+
+
+@if(auth()->user()->role == 'owner')
+{{-- Modal Laporan Laba Rugi --}}
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background-color: #1a1a1a; border-radius: 16px;">
+            <div class="modal-header border-bottom border-white-5">
+                <h5 class="modal-title text-white fw-bold">Cetak Laporan Keuangan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reportForm" action="{{ route('admin.reports.profitLoss') }}" method="GET" target="_blank">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">Pilih rentang tanggal untuk menghitung pendapatan (Order lunas) vs semua pengeluaran dalam periode tersebut.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase">Tanggal Mulai</label>
+                            <input type="date" name="start_date" required class="form-control" 
+                                   style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase">Tanggal Akhir</label>
+                            <input type="date" name="end_date" required class="form-control" 
+                                   style="background-color: #2a2a2a; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-white-5 p-4">
+                    <button type="button" class="btn btn-outline-secondary px-4 text-white" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-print me-2"></i>Generate Laporan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 <style>
     .form-control::placeholder { color: #555; }

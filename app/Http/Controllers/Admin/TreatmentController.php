@@ -29,6 +29,10 @@ class TreatmentController extends Controller
      */
     public function create()
     {
+        if (auth()->user()->role !== 'owner') {
+            return redirect()->route('admin.treatments.index')
+                ->with('error', 'Hanya Owner yang dapat menambah layanan treatment.');
+        }
         return view('admin.treatments.create');
     }
 
@@ -37,6 +41,10 @@ class TreatmentController extends Controller
      */
     public function store(Request $request)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:treatments,name',
             'price' => 'required|numeric|min:0',
@@ -57,6 +65,10 @@ class TreatmentController extends Controller
      */
     public function edit(\App\Models\Treatment $treatment)
     {
+        if (auth()->user()->role !== 'owner') {
+            return redirect()->route('admin.treatments.index')
+                ->with('error', 'Hanya Owner yang dapat mengubah layanan treatment.');
+        }
         return view('admin.treatments.edit', compact('treatment'));
     }
 
@@ -65,6 +77,10 @@ class TreatmentController extends Controller
      */
     public function update(Request $request, \App\Models\Treatment $treatment)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:treatments,name,' . $treatment->id,
             'price' => 'required|numeric|min:0',
@@ -85,8 +101,14 @@ class TreatmentController extends Controller
      */
     public function destroy(\App\Models\Treatment $treatment)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized action.');
+        }
+
         // Check if treatment is used in any orders to prevent orphaned records
-        if (\App\Models\Order::where('treatment_id', $treatment->id)->exists()) {
+        if (\App\Models\Order::where('id', '>', 0)->whereHas('items', function($q) use ($treatment) {
+            $q->where('treatment_id', $treatment->id);
+        })->exists()) {
             return redirect()->route('admin.treatments.index')
                 ->with('error', 'Gagal dihapus! Treatment ini sedang digunakan pada data order.');
         }

@@ -7,7 +7,7 @@
             <div class="text-center mb-5">
                 <i class="fas fa-shoe-prints fa-3x text-primary mb-3"></i>
                 <h3 class="fw-bold" style="font-family: 'Playfair Display', serif; font-style: italic;">Masuk Area Klien</h3>
-                <p class="text-muted" style="font-weight: 300; font-size: 0.9rem;">Masukkan kredensial Anda untuk melanjutkan</p>
+                <p class="text-white" style="font-weight: 300; font-size: 0.9rem;">Masukkan kredensial Anda untuk melanjutkan</p>
             </div>
             
             <div class="card p-4">
@@ -64,7 +64,7 @@
                         </div>
                         
                         @if (Route::has('register'))
-                            <div class="text-center text-muted" style="font-size: 0.9rem;">
+                            <div class="text-center text-white" style="font-size: 0.9rem;">
                                 Belum memiliki akun? <a href="{{ route('register') }}" class="text-primary text-decoration-none fw-semibold">Daftar Sekarang</a>
                             </div>
                         @endif

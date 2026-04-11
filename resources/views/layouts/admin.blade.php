@@ -23,7 +23,7 @@
             --secondary: #121212;     /* Almost Black */
             --secondary-light: #1e1e1e; /* Lighter Black */
             --text-light: #e0e0e0;
-            --text-muted: #a0a0a0;
+            --text-muted: rgba(255, 255, 255, 0.7);
             --sidebar-width: 260px;
         }
 
@@ -35,6 +35,8 @@
             overflow-x: hidden;
             display: flex;
         }
+
+        .text-muted { color: var(--text-muted) !important; }
 
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Playfair Display', serif;
@@ -241,7 +243,7 @@
         </div>
 
         <nav class="nav flex-column mb-4">
-            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+            <a class="nav-link {{ request()->routeIs('*.dashboard') ? 'active' : '' }}" href="{{ Auth::user()->role == 'owner' ? route('owner.dashboard') : route('admin.dashboard') }}">
                 <i class="fas fa-home"></i> Dashboard
             </a>
             <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}">
@@ -259,9 +261,9 @@
             <a class="nav-link {{ request()->routeIs('admin.expenses.*') ? 'active' : '' }}" href="{{ route('admin.expenses.index') }}">
                 <i class="fas fa-wallet"></i> Pengeluaran
             </a>
-            <a class="nav-link {{ request()->routeIs('admin.price-requests.*') ? 'active' : '' }}" href="{{ route('admin.price-requests.index') }}">
-                <i class="fas fa-tags"></i> Request Harga
-            </a>
+                <!-- <a class="nav-link {{ request()->routeIs('admin.price-requests.*') ? 'active' : '' }}" href="{{ route('admin.price-requests.index') }}">
+                    <i class="fas fa-tags"></i> Request Harga
+                </a> -->
         </nav>
     </div>
 

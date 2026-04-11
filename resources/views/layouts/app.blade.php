@@ -259,7 +259,7 @@
         </main>
         
         <footer class="mt-auto py-4 text-center border-top" style="border-color: rgba(255,255,255,0.05) !important;">
-            <p class="text-muted small mb-0">&copy; {{ date('Y') }} Cleansetz Premium Care.</p>
+            <p class="text-white     small mb-0">&copy; {{ date('Y') }} Cleansetz Premium Care.</p>
         </footer>
     </div>
 

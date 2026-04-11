@@ -134,6 +134,41 @@
             color: var(--primary);
         }
 
+        /* Mobile Navbar Styling */
+        @media (max-width: 991px) {
+            .navbar {
+                padding: 1rem 0;
+                background-color: rgba(18, 18, 18, 0.98) !important;
+                backdrop-filter: blur(15px);
+            }
+            .navbar-collapse {
+                border: none !important;
+                margin-top: 0 !important;
+                padding: 2rem 0 !important;
+                text-align: center;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .nav-link {
+                font-size: 1.5rem !important;
+                margin: 1.5rem 0 !important;
+                display: inline-block;
+            }
+            .nav-link::after { bottom: -10px; }
+            .navbar-nav { margin-bottom: 2rem !important; }
+            .mobile-auth-btns {
+                flex-direction: column;
+                width: 100%;
+                padding: 0 2rem;
+            }
+            .mobile-auth-btns .btn, .mobile-auth-btns .nav-link {
+                width: 100%;
+                margin: 0.5rem 0 !important;
+            }
+        }
+
         /* Hero Parallax */
         .hero {
             position: relative;
@@ -190,6 +225,19 @@
             line-height: 1.1;
             margin-bottom: 2rem;
             font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3.2rem;
+            }
+            .hero-content {
+                margin-top: 2rem;
+            }
+            .hero-desc {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
         }
 
         .hero-desc {
@@ -390,12 +438,19 @@
             .hero-title { font-size: 3.5rem; }
             .split-content { padding: 4rem 2rem; }
             .section-title { font-size: 2.5rem; }
-            .bg-text { font-size: 8rem; }
-            .navbar-collapse {
-                background-color: var(--secondary);
-                padding: 1rem;
-                margin-top: 1rem;
-                border: 1px solid rgba(255,255,255,0.05);
+            .bg-text { font-size: 6rem; }
+        }
+
+        @media (max-width: 576px) {
+            .hero-btns {
+                flex-direction: column;
+                gap: 1rem !important;
+            }
+            .hero-btns .btn {
+                width: 100%;
+            }
+            .hero-title {
+                font-size: 2.8rem;
             }
         }
     </style>
@@ -416,17 +471,17 @@
             <div class="collapse navbar-collapse" id="navMenu">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#home">Beranda</a>
+                        <a class="nav-link active" href="#home" onclick="closeMenu()">Beranda</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#services">Layanan</a>
+                        <a class="nav-link" href="#services" onclick="closeMenu()">Layanan</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#process">Proses</a>
+                        <a class="nav-link" href="#process" onclick="closeMenu()">Proses</a>
                     </li>
                 </ul>
                 
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-3 mobile-auth-btns">
                     @if (Route::has('login'))
                         @auth
                             <a href="{{ url('/home') }}" class="btn btn-solid-custom">
@@ -456,7 +511,7 @@
                 <p class="hero-desc">
                     Kami mengembalikan kemewahan alas kaki Anda melalui metodologi pembersihan perfeksionis dan restorasi detail tingkat tinggi. Tanpa kompromi.
                 </p>
-                <div class="d-flex gap-4 justify-content-center mt-5">
+                <div class="d-flex gap-4 justify-content-center mt-5 hero-btns">
                     <a href="#services" class="btn btn-solid-custom">Eksplorasi Layanan</a>
                     <a href="{{ route('register') }}" class="btn btn-outline-custom">Mulai Reservasi</a>
                 </div>
@@ -648,6 +703,14 @@
                 parallaxBg.style.transform = `translateY(${scrollPosition * 0.4}px)`;
             }
         });
+
+        // Close Mobile Menu on Click
+        function closeMenu() {
+            const navMenu = document.getElementById('navMenu');
+            if (window.innerWidth < 992) {
+                new bootstrap.Collapse(navMenu).hide();
+            }
+        }
     </script>
 </body>
 </html>

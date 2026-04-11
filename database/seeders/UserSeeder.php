@@ -45,5 +45,14 @@ class UserSeeder extends Seeder
             'phone' => '081200000003',
             'address' => 'Jl. Customer 3',
         ]);
+        // 4. Specific Test Customer
+        User::create([
+            'name' => 'Bayu Customer',
+            'email' => 'bayu@example.com',
+            'password' => Hash::make('password123'),
+            'role' => 'customer',
+            'phone' => '085600267104',
+            'address' => 'Jl. Merdeka No. 45, Jakarta',
+        ]);
     }
 }

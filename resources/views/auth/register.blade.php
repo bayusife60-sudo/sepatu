@@ -7,7 +7,7 @@
             <div class="text-center mb-5">
                 <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
                 <h3 class="fw-bold" style="font-family: 'Playfair Display', serif; font-style: italic;">Bergabung Bersama Kami</h3>
-                <p class="text-muted" style="font-weight: 300; font-size: 0.9rem;">Daftarkan diri Anda untuk merasakan layanan premium</p>
+                <p class="text-white" style="font-weight: 300; font-size: 0.9rem;">Daftarkan diri Anda untuk merasakan layanan premium</p>
             </div>
             
             <div class="card p-4">
@@ -44,6 +44,20 @@
                         </div>
 
                         <div class="mb-4">
+                            <label for="phone" class="form-label">{{ __('Nomor WhatsApp') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fab fa-whatsapp"></i></span>
+                                <input id="phone" type="text" class="form-control border-start-0 ps-0 @error('phone') is-invalid @enderror" name="phone" value="{{ old('phone') }}" required placeholder="08123456789">
+                            </div>
+
+                            @error('phone')
+                                <span class="invalid-feedback d-block mt-2" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
                             <label for="password" class="form-label">{{ __('Kata Sandi') }}</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
@@ -72,7 +86,7 @@
                         </div>
                         
                         @if (Route::has('login'))
-                            <div class="text-center text-muted" style="font-size: 0.9rem;">
+                            <div class="text-center text-white" style="font-size: 0.9rem;">
                                 Sudah memiliki akun? <a href="{{ route('login') }}" class="text-primary text-decoration-none fw-semibold">Masuk di sini</a>
                             </div>
                         @endif

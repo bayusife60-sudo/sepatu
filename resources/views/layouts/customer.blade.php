@@ -22,8 +22,8 @@
             --bg: #0f0f0f;
             --bg-card: #1a1a1a;
             --bg-card2: #222222;
-            --text: #e0e0e0;
-            --muted: #888;
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.65);
         }
 
         * { box-sizing: border-box; }
@@ -35,6 +35,8 @@
             margin: 0;
             min-height: 100vh;
         }
+
+        .text-muted { color: var(--muted) !important; }
 
         /* Navbar */
         .top-nav {
@@ -161,7 +163,7 @@
         }
 
         /* Table */
-        .table { color: var(--text); }
+        .table { color: var(--text); --bs-table-bg: transparent; --bs-table-color: var(--text); }
         .table thead th {
             font-size: 0.72rem;
             text-transform: uppercase;
@@ -175,9 +177,14 @@
             padding: 0.9rem 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.04);
             vertical-align: middle;
+            background-color: transparent !important;
+            color: var(--text) !important;
         }
         .table tbody tr:last-child td { border-bottom: none; }
-        .table-hover tbody tr:hover { background-color: rgba(255,255,255,0.02); }
+        .table-hover tbody tr:hover td { 
+            background-color: rgba(255,255,255,0.02) !important; 
+            color: #fff !important;
+        }
 
         /* Badges */
         .badge-status {

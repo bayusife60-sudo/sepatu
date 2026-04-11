@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\TreatmentController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PriceRequestController;
+use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ReportController;
 
 Auth::routes();
 
@@ -19,19 +21,19 @@ Route::get('/', function () {
 
 Route::get('/home', [App\Http\Controllers\HomeController::class , 'index'])->name('home');
 
-// Owner Routes
-Route::middleware(['auth', 'role:owner'])->group(function () {
-    Route::get('/owner/dashboard', [DashboardController::class , 'ownerDashboard'])->name('owner.dashboard');
-});
-
-// Admin Routes
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Management Routes (Admin & Owner)
+Route::middleware(['auth', 'role:admin,owner'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class , 'adminDashboard'])->name('admin.dashboard');
+    Route::get('/owner/dashboard', [DashboardController::class , 'ownerDashboard'])->name('owner.dashboard');
     Route::get('/admin/orders', [OrderController::class , 'index'])->name('admin.orders.index');
     Route::get('/admin/orders/create', [OrderController::class , 'create'])->name('admin.orders.create');
     Route::post('/admin/orders', [OrderController::class , 'store'])->name('admin.orders.store');
     Route::get('/admin/orders/{order}', [OrderController::class , 'show'])->name('admin.orders.show');
     Route::patch('/admin/orders/{order}/status', [OrderController::class , 'updateStatus'])->name('admin.orders.updateStatus');
+    Route::post('/admin/orders/{order}/confirm-payment', [OrderController::class , 'confirmPayment'])->name('admin.orders.confirmPayment');
+    Route::get('/admin/orders/{order}/invoice', [InvoiceController::class , 'downloadPDF'])->name('admin.orders.invoice');
+    Route::get('/admin/orders/export/report', [OrderController::class , 'exportPDF'])->name('admin.orders.export');
+    Route::get('/admin/reports/profit-loss', [ReportController::class , 'profitLossPDF'])->name('admin.reports.profitLoss');
 
     // Kelola Treatment
     Route::resource('admin/treatments', TreatmentController::class)->names([
@@ -66,4 +68,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // Customer Routes
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [DashboardController::class , 'customerDashboard'])->name('customer.dashboard');
+    Route::post('/customer/orders', [DashboardController::class , 'storeOrder'])->name('customer.orders.store');
+    Route::post('/customer/orders/{order}/payment', [DashboardController::class , 'uploadPayment'])->name('customer.payment.upload');
 });
+
+// Public Invoice View
+Route::get('/invoice/{order_code}', [InvoiceController::class , 'publicView'])->name('public.invoice');
