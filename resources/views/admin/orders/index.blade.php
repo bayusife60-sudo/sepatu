@@ -84,6 +84,10 @@
                         <i class="fas fa-file-pdf me-2"></i>Cetak Laporan
                     </button>
 
+                    <button type="button" onclick="exportExcel()" class="btn btn-outline-success px-4">
+                        <i class="fas fa-file-excel me-2"></i>Export Excel
+                    </button>
+
                     @if(request()->anyFilled(['search', 'status', 'customer_id', 'start_date', 'end_date']))
                         <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-danger px-3">
                             <i class="fas fa-times me-2"></i>Reset
@@ -346,6 +350,15 @@
         const formData = new FormData(form);
         const params = new URLSearchParams(formData).toString();
         const exportUrl = "{{ route('admin.orders.export') }}?" + params;
+        
+        window.open(exportUrl, '_blank');
+    }
+
+    function exportExcel() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData).toString();
+        const exportUrl = "{{ route('admin.orders.exportExcel') }}?" + params;
         
         window.open(exportUrl, '_blank');
     }

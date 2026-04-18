@@ -33,7 +33,9 @@ Route::middleware(['auth', 'role:admin,owner'])->group(function () {
     Route::post('/admin/orders/{order}/confirm-payment', [OrderController::class , 'confirmPayment'])->name('admin.orders.confirmPayment');
     Route::get('/admin/orders/{order}/invoice', [InvoiceController::class , 'downloadPDF'])->name('admin.orders.invoice');
     Route::get('/admin/orders/export/report', [OrderController::class , 'exportPDF'])->name('admin.orders.export');
+    Route::get('/admin/orders/export/excel', [OrderController::class , 'exportExcel'])->name('admin.orders.exportExcel');
     Route::get('/admin/reports/profit-loss', [ReportController::class , 'profitLossPDF'])->name('admin.reports.profitLoss');
+    Route::get('/admin/reports/profit-loss/excel', [ReportController::class , 'profitLossExcel'])->name('admin.reports.profitLossExcel');
 
     // Kelola Treatment
     Route::resource('admin/treatments', TreatmentController::class)->names([
@@ -70,6 +72,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [DashboardController::class , 'customerDashboard'])->name('customer.dashboard');
     Route::post('/customer/orders', [DashboardController::class , 'storeOrder'])->name('customer.orders.store');
     Route::post('/customer/orders/{order}/payment', [DashboardController::class , 'uploadPayment'])->name('customer.payment.upload');
+    Route::post('/customer/payment/{order}/create', [\App\Http\Controllers\PaymentController::class, 'createInvoice'])->name('customer.payment.xendit');
 });
 
 // Public Invoice View

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Treatment;
 use App\Models\User;
+use App\Exports\OrdersExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -99,6 +101,14 @@ class OrderController extends Controller
         return response($dompdf->output())
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="Laporan_Order_' . now()->format('Ymd') . '.pdf"');
+    }
+
+    /**
+     * Export Filtered Orders to Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new OrdersExport($request), 'Laporan_Order_' . now()->format('Ymd') . '.xlsx');
     }
 
     public function show(Order $order)

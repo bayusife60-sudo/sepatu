@@ -36,9 +36,12 @@
                 </div>
             </div>
             @if(session('new_order_id'))
-                <button type="button" class="btn btn-success px-4" onclick="openPaymentModal({{ session('new_order_id') }}, {{ session('new_order_total') }})" style="background: #22c55e; border: none; font-weight: 600;">
-                    <i class="fas fa-wallet me-2"></i> Bayar Sekarang
-                </button>
+                <form action="{{ route('customer.payment.xendit', session('new_order_id')) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success px-4" style="background: #22c55e; border: none; font-weight: 600;">
+                        <i class="fas fa-wallet me-2"></i> Bayar Sekarang (Xendit)
+                    </button>
+                </form>
             @endif
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close" style="top: 1rem; right: 1rem;"></button>
@@ -354,9 +357,12 @@
                                 @elseif($order->payment_proof)
                                     <span class="badge bg-info rounded-pill px-2 py-1" style="font-size: 0.68rem;">Menunggu Verifikasi</span>
                                 @else
-                                    <button type="button" class="btn btn-warning btn-sm py-0 px-2 rounded-pill fw-bold" onclick="openPaymentModal({{ $order->id }}, {{ $order->total_price }})" style="font-size: 0.68rem;">
-                                        Bayar
-                                    </button>
+                                    <form action="{{ route('customer.payment.xendit', $order->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-warning btn-sm py-0 px-2 rounded-pill fw-bold" style="font-size: 0.68rem;">
+                                            {{ $order->payment_link ? 'Lanjut Bayar' : 'Bayar' }}
+                                        </button>
+                                    </form>
                                 @endif
                             </td>
                             <td class="text-center">

@@ -257,10 +257,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top border-white-5 p-4">
-                    <button type="button" class="btn btn-outline-secondary px-4 text-white" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-print me-2"></i>Generate Laporan
+                <div class="modal-footer border-top border-white-5 p-4 py-3 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-3 text-white" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-info px-3">
+                        <i class="fas fa-file-pdf me-2"></i>PDF
+                    </button>
+                    <button type="button" onclick="exportFinanceExcel()" class="btn btn-success px-3">
+                        <i class="fas fa-file-excel me-2"></i>Excel
                     </button>
                 </div>
             </form>
@@ -295,4 +298,20 @@
         color: var(--primary);
     }
 </style>
+
+<script>
+    function exportFinanceExcel() {
+        const form = document.getElementById('reportForm');
+        const startDate = form.querySelector('input[name="start_date"]').value;
+        const endDate = form.querySelector('input[name="end_date"]').value;
+        
+        if (!startDate || !endDate) {
+            alert('Silakan pilih rentang tanggal terlebih dahulu.');
+            return;
+        }
+        
+        const exportUrl = "{{ route('admin.reports.profitLossExcel') }}?start_date=" + startDate + "&end_date=" + endDate;
+        window.open(exportUrl, '_blank');
+    }
+</script>
 @endsection

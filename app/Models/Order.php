@@ -33,6 +33,9 @@ class Order extends Model
         'payment_method',
         'payment_date',
         'estimated_completion',
+        'xendit_invoice_id',
+        'xendit_external_id',
+        'payment_link',
     ];
 
     public function items()
