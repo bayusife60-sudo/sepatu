@@ -621,8 +621,8 @@
         console.log('Script section start');
         // Global variables for map
         let map, marker;
-        const STORE_LAT = parseFloat("{{ env('STORE_LATITUDE', -6.20000000) }}".replace(',', '.'));
-        const STORE_LNG = parseFloat("{{ env('STORE_LONGITUDE', 106.71660000) }}".replace(',', '.'));
+        const STORE_LAT = parseFloat("{{ env('STORE_LATITUDE', -6.200687638510387) }}".replace(',', '.'));
+        const STORE_LNG = parseFloat("{{ env('STORE_LONGITUDE', 106.78972419432601) }}".replace(',', '.'));
 
         console.log('Constants loaded:', {STORE_LAT, STORE_LNG});
 
