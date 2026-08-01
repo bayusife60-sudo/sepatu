@@ -30,7 +30,7 @@ class DashboardController extends Controller
         $todayDeliveries = \App\Models\Order::whereDate('estimated_completion', today())->whereIn('status', ['Siap Dikirim', 'Siap Diambil'])->count();
 
         // --- Data for ApexCharts ---
-        
+
         // 1. Daily Data (Current Month)
         $currentDay = now()->day;
         $dailyLabels = [];
@@ -41,17 +41,17 @@ class DashboardController extends Controller
         for ($i = 1; $i <= $currentDay; $i++) {
             $date = now()->setDay($i)->format('Y-m-d');
             $dailyLabels[] = $i; // Day number
-            
+
             $rev = \App\Models\Order::where('payment_status', 'lunas')
                 ->whereDate('created_at', $date)
                 ->sum('total_price');
-            $dailyRevenue[] = (int)$rev;
+            $dailyRevenue[] = (int) $rev;
 
             $exp = \App\Models\Expense::whereDate('date', $date)
                 ->sum('amount');
-            $dailyExpenses[] = (int)$exp;
+            $dailyExpenses[] = (int) $exp;
 
-            $shoes = \App\Models\OrderItem::whereHas('order', function($q) use ($date) {
+            $shoes = \App\Models\OrderItem::whereHas('order', function ($q) use ($date) {
                 $q->whereDate('created_at', $date);
             })->count();
             $dailyShoes[] = $shoes;
@@ -70,16 +70,16 @@ class DashboardController extends Controller
                 ->whereYear('created_at', now()->year)
                 ->whereMonth('created_at', $m)
                 ->sum('total_price');
-            $monthlyRevenue[] = (int)$rev;
+            $monthlyRevenue[] = (int) $rev;
 
             $exp = \App\Models\Expense::whereYear('date', now()->year)
                 ->whereMonth('date', $m)
                 ->sum('amount');
-            $monthlyExpenses[] = (int)$exp;
+            $monthlyExpenses[] = (int) $exp;
 
-            $shoes = \App\Models\OrderItem::whereHas('order', function($q) use ($m) {
+            $shoes = \App\Models\OrderItem::whereHas('order', function ($q) use ($m) {
                 $q->whereYear('created_at', now()->year)
-                  ->whereMonth('created_at', $m);
+                    ->whereMonth('created_at', $m);
             })->count();
             $monthlyShoes[] = $shoes;
         }
@@ -164,36 +164,41 @@ class DashboardController extends Controller
         $services = \App\Models\Treatment::where('is_active', true)->get();
 
         return view('customer.dashboard', compact(
-            'totalOrders', 'activeOrders', 'completedOrders',
-            'unpaidOrders', 'activeOrdersList', 'orders', 'services'
+            'totalOrders',
+            'activeOrders',
+            'completedOrders',
+            'unpaidOrders',
+            'activeOrdersList',
+            'orders',
+            'services'
         ));
     }
 
     public function storeOrder(Request $request)
     {
         $validated = $request->validate([
-            "items"             => "required|array|min:1",
-            "items.*.brand"    => "required|string|max:100",
+            "items" => "required|array|min:1",
+            "items.*.brand" => "required|string|max:100",
             "items.*.material" => "required|string|max:100",
-            "items.*.color"    => "required|string|max:100",
+            "items.*.color" => "required|string|max:100",
             "items.*.treatment_id" => "required|exists:treatments,id",
-            "items.*.photo"    => "nullable|image|max:2048",
-            "service_method"    => "required|string|in:datang_langsung,pickup_delivery",
-            "latitude"          => "nullable|required_if:service_method,pickup_delivery|numeric",
-            "longitude"         => "nullable|required_if:service_method,pickup_delivery|numeric",
-            "pickup_date"       => "nullable|required_if:service_method,pickup_delivery|date",
-            "pickup_time"       => "nullable|required_if:service_method,pickup_delivery",
+            "items.*.photo" => "nullable|image|max:2048",
+            "service_method" => "required|string|in:datang_langsung,pickup_delivery",
+            "latitude" => "nullable|required_if:service_method,pickup_delivery|numeric",
+            "longitude" => "nullable|required_if:service_method,pickup_delivery|numeric",
+            "pickup_date" => "nullable|required_if:service_method,pickup_delivery|date",
+            "pickup_time" => "nullable|required_if:service_method,pickup_delivery",
         ]);
 
         $customer = auth()->user();
-        
+
         $totalTreatmentPrice = 0;
         $orderItemsData = [];
 
         foreach ($validated['items'] as $index => $item) {
             $treatment = Treatment::findOrFail($item['treatment_id']);
             $totalTreatmentPrice += $treatment->price;
-            
+
             $photoPath = null;
             if ($request->hasFile("items.{$index}.photo")) {
                 $file = $request->file("items.{$index}.photo");
@@ -203,12 +208,12 @@ class DashboardController extends Controller
             }
 
             $orderItemsData[] = [
-                'shoe_brand'    => $item['brand'],
+                'shoe_brand' => $item['brand'],
                 'shoe_material' => $item['material'],
-                'shoe_color'    => $item['color'],
-                'treatment_id'  => $treatment->id,
-                'price'         => $treatment->price,
-                'photo_before'  => $photoPath,
+                'shoe_color' => $item['color'],
+                'treatment_id' => $treatment->id,
+                'price' => $treatment->price,
+                'photo_before' => $photoPath,
             ];
         }
 
@@ -216,8 +221,8 @@ class DashboardController extends Controller
         $distance = 0;
 
         if ($validated["service_method"] === "pickup_delivery") {
-            $storeLat = env('STORE_LATITUDE', -6.20000000);
-            $storeLng = env('STORE_LONGITUDE', 106.81660000);
+            $storeLat = env('STORE_LATITUDE', -6.200687638510387);
+            $storeLng = env('STORE_LONGITUDE', 106.78972419432601);
             $custLat = $validated["latitude"];
             $custLng = $validated["longitude"];
 
@@ -247,19 +252,19 @@ class DashboardController extends Controller
         DB::beginTransaction();
         try {
             $order = Order::create([
-                "order_code"           => $orderCode,
-                "customer_id"          => $customer->id,
-                "customer_name"        => $customer->name,
-                "service_method"       => $validated["service_method"],
-                "latitude"             => $validated["latitude"] ?? null,
-                "longitude"            => $validated["longitude"] ?? null,
-                "distance"             => $distance,
-                "pickup_date"          => $validated["pickup_date"] ?? null,
-                "pickup_time"          => $validated["pickup_time"] ?? null,
-                "pickup_fee"           => $serviceFee,
-                "total_price"          => $totalPrice,
-                "status"               => "Antrian",
-                "payment_status"       => "belum_lunas",
+                "order_code" => $orderCode,
+                "customer_id" => $customer->id,
+                "customer_name" => $customer->name,
+                "service_method" => $validated["service_method"],
+                "latitude" => $validated["latitude"] ?? null,
+                "longitude" => $validated["longitude"] ?? null,
+                "distance" => $distance,
+                "pickup_date" => $validated["pickup_date"] ?? null,
+                "pickup_time" => $validated["pickup_time"] ?? null,
+                "pickup_fee" => $serviceFee,
+                "total_price" => $totalPrice,
+                "status" => "Antrian",
+                "payment_status" => "belum_lunas",
                 "estimated_completion" => now()->addDays(3),
             ]);
 
