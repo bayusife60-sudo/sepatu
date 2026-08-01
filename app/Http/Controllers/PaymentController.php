@@ -4,16 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
-use Xendit\Configuration;
-use Xendit\Invoice\InvoiceApi;
-use Xendit\Invoice\CreateInvoiceRequest;
+use Xendit\Xendit;
+use Xendit\Invoices;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
     public function __construct()
     {
-        Configuration::setXenditKey(config('services.xendit.secret_key'));
+        Xendit::setApiKey(config('services.xendit.secret_key'));
     }
 
     public function createInvoice(Order $order)
@@ -28,11 +27,9 @@ class PaymentController extends Controller
             return redirect($order->payment_link);
         }
 
-        $apiInstance = new InvoiceApi();
-        
         $external_id = $order->order_code . '-' . time();
-        
-        $create_invoice_request = new CreateInvoiceRequest([
+
+        $params = [
             'external_id' => $external_id,
             'amount' => (float) $order->total_price,
             'payer_email' => auth()->user()->email,
@@ -41,11 +38,11 @@ class PaymentController extends Controller
             'success_redirect_url' => route('customer.dashboard'),
             'failure_redirect_url' => route('customer.dashboard'),
             'currency' => 'IDR',
-        ]);
+        ];
 
         try {
-            $result = $apiInstance->createInvoice($create_invoice_request);
-            
+            $result = Invoices::create($params);
+
             $order->update([
                 'xendit_invoice_id' => $result['id'],
                 'xendit_external_id' => $external_id,
@@ -53,11 +50,8 @@ class PaymentController extends Controller
             ]);
 
             return redirect($result['invoice_url']);
-        } catch (\Xendit\XenditSdkException $e) {
-            Log::error('Xendit Error: ' . $e->getFullError());
-            return back()->with('error', 'Gagal membuat invoice pembayaran: ' . $e->getMessage());
         } catch (\Exception $e) {
-            Log::error('General Error: ' . $e->getMessage());
+            Log::error('Xendit Error: ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
@@ -76,27 +70,27 @@ class PaymentController extends Controller
         }
 
         $external_id = $request->external_id;
-       
+
         $status = $request->status;
 
-        
-            $order = Order::where('xendit_external_id', $external_id)->first();
 
-            if ($order) {
-        
-                    $order->update([
-                        'payment_status' => 'lunas',
-                        'status' => 'Antrian',
-                        'payment_method' => $request->payment_method ?? 'Xendit',
-                        'payment_date' => now(),
-                        'payment_proof' => 'PAID_VIA_XENDIT'
-                    ]);
-                    Log::info('Order Paid Successfully: ' . $external_id);
-            
-            } else {
-                Log::warning('Order Not Found for Webhook: ' . $external_id);
-            }
-        
+        $order = Order::where('xendit_external_id', $external_id)->first();
+
+        if ($order) {
+
+            $order->update([
+                'payment_status' => 'lunas',
+                'status' => 'Antrian',
+                'payment_method' => $request->payment_method ?? 'Xendit',
+                'payment_date' => now(),
+                'payment_proof' => 'PAID_VIA_XENDIT'
+            ]);
+            Log::info('Order Paid Successfully: ' . $external_id);
+
+        } else {
+            Log::warning('Order Not Found for Webhook: ' . $external_id);
+        }
+
         return response()->json([
             'message' => 'Callback processed successfully',
             'external_id' => $external_id
