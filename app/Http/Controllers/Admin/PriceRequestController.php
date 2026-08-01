@@ -30,6 +30,10 @@ class PriceRequestController extends Controller
      */
     public function create()
     {
+        if (auth()->user()->role === 'owner') {
+            abort(403, 'Owner tidak bisa membuat request perubahan harga.');
+        }
+
         $treatments = Treatment::where('is_active', true)->orderBy('name')->get();
         return view('admin.price-requests.create', compact('treatments'));
     }
@@ -39,6 +43,10 @@ class PriceRequestController extends Controller
      */
     public function store(Request $request)
     {
+        if (auth()->user()->role === 'owner') {
+            abort(403, 'Owner tidak bisa membuat request perubahan harga.');
+        }
+
         $validated = $request->validate([
             'treatment_id' => 'required|exists:treatments,id',
             'new_price' => 'required|numeric|min:0',

@@ -11,9 +11,11 @@
             <p class="text-muted mt-1 mb-0" style="font-weight: 300;">Manajemen usulan perubahan harga layanan treatment.</p>
         </div>
         <div class="col-md-5 text-md-end mt-3 mt-md-0">
+            @if(Auth::user()->role !== 'owner')
             <a href="{{ route('admin.price-requests.create') }}" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
                 <i class="fas fa-plus me-2"></i>Buat Request Baru
             </a>
+            @endif
         </div>
     </div>
 
@@ -146,9 +148,11 @@
                             <td colspan="6" class="py-5 text-center text-muted">
                                 <i class="fas fa-tags fa-3x mb-3 d-block" style="opacity: 0.15;"></i>
                                 <p class="mb-2">Belum ada data request harga.</p>
+                                @if(Auth::user()->role !== 'owner')
                                 <a href="{{ route('admin.price-requests.create') }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus me-1"></i>Buat Request
                                 </a>
+                                @endif
                             </td>
                         </tr>
                         @endforelse
