@@ -258,9 +258,9 @@
             <a class="nav-link {{ request()->routeIs('admin.expenses.*') ? 'active' : '' }}" href="{{ route('admin.expenses.index') }}">
                 <i class="fas fa-wallet"></i> Pengeluaran
             </a>
-                <!-- <a class="nav-link {{ request()->routeIs('admin.price-requests.*') ? 'active' : '' }}" href="{{ route('admin.price-requests.index') }}">
-                    <i class="fas fa-tags"></i> Request Harga
-                </a> -->
+            <a class="nav-link {{ request()->routeIs('admin.price-requests.*') ? 'active' : '' }}" href="{{ route('admin.price-requests.index') }}">
+                <i class="fas fa-tags"></i> Request Harga
+            </a>
         </nav>
     </div>
 

@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-4 align-items-end">
         <div class="col-md-7">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Request Harga</h2>
             <p class="text-muted mt-1 mb-0" style="font-weight: 300;">Manajemen usulan perubahan harga layanan treatment.</p>
         </div>

@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-5 align-items-end">
         <div class="col-md-8">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Buat Order Baru</h2>
             <p class="text-white-50 mt-2 mb-0" style="font-weight: 300;">Manajemen input order multi-item dengan kalkulasi otomatis.</p>
         </div>
@@ -51,7 +51,14 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12 mb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_new_customer" name="is_new_customer" value="1" {{ old('is_new_customer') ? 'checked' : '' }}>
+                                    <label class="form-check-label text-white fw-bold small" for="is_new_customer">Buat Akun Pelanggan Baru</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6" id="customer_id_wrapper">
                                 <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Pilih Akun</label>
                                 <select name="customer_id" id="customer_id" class="form-select select2-dark" required>
                                     <option value="">-- Cari Pelanggan --</option>
@@ -65,10 +72,20 @@
                                     @endforeach
                                 </select>
                             </div>
+                            
+                            <div class="col-md-6" id="new_customer_email_wrapper" style="display: none;">
+                                <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Alamat Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-white-10 text-white-50"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" name="new_customer_email" id="new_customer_email" class="form-control" 
+                                           placeholder="email@example.com" value="{{ old('new_customer_email') }}">
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Nama Display</label>
                                 <input type="text" name="customer_name" id="customer_name" class="form-control" 
-                                       placeholder="Nama pada nota..." value="{{ old('customer_name') }}">
+                                       placeholder="Nama Lengkap..." value="{{ old('customer_name') }}">
                             </div>
                             <div class="col-md-12 mt-3">
                                 <label class="form-label text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Nomor WhatsApp</label>
@@ -367,9 +384,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const customerSelect = document.getElementById('customer_id');
     const customerName = document.getElementById('customer_name');
     const customerPhone = document.getElementById('customer_phone');
+    const isNewCustomerCb = document.getElementById('is_new_customer');
+    const customerIdWrapper = document.getElementById('customer_id_wrapper');
+    const newCustomerEmailWrapper = document.getElementById('new_customer_email_wrapper');
+
+    function toggleNewCustomer() {
+        if (isNewCustomerCb.checked) {
+            customerIdWrapper.style.display = 'none';
+            customerSelect.required = false;
+            newCustomerEmailWrapper.style.display = 'block';
+            document.getElementById('new_customer_email').required = true;
+            customerName.required = true;
+            customerPhone.required = true;
+            
+            if (customerSelect.value) {
+                customerSelect.value = '';
+                customerName.value = '';
+                customerPhone.value = '';
+            }
+        } else {
+            customerIdWrapper.style.display = 'block';
+            customerSelect.required = true;
+            newCustomerEmailWrapper.style.display = 'none';
+            document.getElementById('new_customer_email').required = false;
+            customerName.required = false;
+            customerPhone.required = false;
+        }
+    }
+    
+    isNewCustomerCb.addEventListener('change', toggleNewCustomer);
+    toggleNewCustomer();
 
     customerSelect.addEventListener('change', () => {
+        if (isNewCustomerCb.checked) return;
+
         const option = customerSelect.options[customerSelect.selectedIndex];
+        if(!option) return;
+        
         const name = option.dataset.name || '';
         const phone = option.dataset.phone || '';
 

@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-4 align-items-end">
         <div class="col-md-7">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Kelola Order</h2>
             <p class="text-muted mt-1 mb-0" style="font-weight: 300;">Manajemen semua order pelanggan Cleansetz.</p>
         </div>
@@ -220,6 +220,15 @@
                                        title="Kirim WhatsApp" style="width: 30px; height: 30px; padding: 0; background-color: #25d366; border: none;">
                                         <i class="fab fa-whatsapp" style="font-size: 0.8rem;"></i>
                                     </a>
+
+                                    @if($order->payment_status != 'lunas')
+                                    <form action="{{ route('admin.orders.confirmPayment', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi pembayaran ini menjadi LUNAS?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-circle d-flex align-items-center justify-content-center" title="Konfirmasi Lunas" style="width: 30px; height: 30px; padding: 0; border-color: rgba(25,135,84,0.3);">
+                                            <i class="fas fa-check-double" style="font-size: 0.75rem;"></i>
+                                        </button>
+                                    </form>
+                                    @endif
 
                                     {{-- Status Trigger Modal --}}
                                     <button class="btn btn-sm btn-outline-custom rounded-pill d-flex align-items-center gap-2" 

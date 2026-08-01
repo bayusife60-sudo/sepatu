@@ -57,7 +57,6 @@ Route::middleware(['auth', 'role:admin,owner'])->group(function () {
         'destroy' => 'admin.expenses.destroy',
     ])->except(['show']);
 
-    // Kelola Request Harga
     Route::resource('admin/price-requests', PriceRequestController::class)->names([
         'index' => 'admin.price-requests.index',
         'create' => 'admin.price-requests.create',
@@ -65,6 +64,9 @@ Route::middleware(['auth', 'role:admin,owner'])->group(function () {
         'show' => 'admin.price-requests.show',
         'destroy' => 'admin.price-requests.destroy',
     ])->except(['edit', 'update']);
+
+    Route::post('admin/price-requests/{priceRequest}/approve', [PriceRequestController::class, 'approve'])->name('admin.price-requests.approve');
+    Route::post('admin/price-requests/{priceRequest}/reject', [PriceRequestController::class, 'reject'])->name('admin.price-requests.reject');
 });
 
 // Customer Routes

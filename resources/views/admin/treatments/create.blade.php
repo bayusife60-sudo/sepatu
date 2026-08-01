@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Tambah Treatment</h2>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">

@@ -89,4 +89,51 @@ class PriceRequestController extends Controller
         return redirect()->route('admin.price-requests.index')
             ->with('success', 'Request perubahan harga dibatalkan/dihapus.');
     }
+
+    /**
+     * Owner menyetujui request harga.
+     */
+    public function approve(PriceChangeRequest $priceRequest)
+    {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($priceRequest->status !== 'pending') {
+            return redirect()->back()->with('error', 'Request ini sudah diproses.');
+        }
+
+        $treatment = $priceRequest->treatment;
+        $treatment->price = $priceRequest->new_price;
+        $treatment->save();
+
+        $priceRequest->update(['status' => 'approved']);
+
+        return redirect()->route('admin.price-requests.index')->with('success', 'Request disetujui, harga treatment berhasil diubah.');
+    }
+
+    /**
+     * Owner menolak request harga.
+     */
+    public function reject(Request $request, PriceChangeRequest $priceRequest)
+    {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($priceRequest->status !== 'pending') {
+            return redirect()->back()->with('error', 'Request ini sudah diproses.');
+        }
+
+        $request->validate([
+            'rejection_note' => 'required|string|max:1000'
+        ]);
+
+        $priceRequest->update([
+            'status' => 'rejected',
+            'rejection_note' => $request->rejection_note
+        ]);
+
+        return redirect()->route('admin.price-requests.index')->with('success', 'Request perubahan harga ditolak.');
+    }
 }

@@ -61,7 +61,10 @@
                             <label for="password" class="form-label">{{ __('Kata Sandi') }}</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input id="password" type="password" class="form-control border-start-0 ps-0 @error('password') is-invalid @enderror" name="password" required autocomplete="new-password" placeholder="••••••••">
+                                <input id="password" type="password" class="form-control border-start-0 ps-0 border-end-0 @error('password') is-invalid @enderror" name="password" required autocomplete="new-password" placeholder="••••••••">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: rgba(255,255,255,0.1); background-color: #2a2a2a; color: #a0a0a0;">
+                                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                </button>
                             </div>
 
                             @error('password')
@@ -75,7 +78,10 @@
                             <label for="password-confirm" class="form-label">{{ __('Konfirmasi Kata Sandi') }}</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
-                                <input id="password-confirm" type="password" class="form-control border-start-0 ps-0" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••">
+                                <input id="password-confirm" type="password" class="form-control border-start-0 ps-0 border-end-0" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword" style="border-color: rgba(255,255,255,0.1); background-color: #2a2a2a; color: #a0a0a0;">
+                                    <i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -96,4 +102,32 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle Password
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        const togglePasswordIcon = document.querySelector('#togglePasswordIcon');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            togglePasswordIcon.classList.toggle('fa-eye');
+            togglePasswordIcon.classList.toggle('fa-eye-slash');
+        });
+
+        // Toggle Confirm Password
+        const toggleConfirmPassword = document.querySelector('#toggleConfirmPassword');
+        const passwordConfirm = document.querySelector('#password-confirm');
+        const toggleConfirmPasswordIcon = document.querySelector('#toggleConfirmPasswordIcon');
+
+        toggleConfirmPassword.addEventListener('click', function (e) {
+            const type = passwordConfirm.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordConfirm.setAttribute('type', type);
+            toggleConfirmPasswordIcon.classList.toggle('fa-eye');
+            toggleConfirmPasswordIcon.classList.toggle('fa-eye-slash');
+        });
+    });
+</script>
 @endsection

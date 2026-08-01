@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">Detail Request Harga</h2>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
@@ -84,7 +84,9 @@
         </div>
         
         @if($priceRequest->status === 'pending')
-        <div class="card-footer py-3 text-end" style="border-top: 1px solid rgba(255,255,255,0.05); background-color: transparent;">
+        <div class="card-footer py-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255,255,255,0.05); background-color: transparent;">
+            
+            @if(auth()->user()->role === 'admin')
             <form action="{{ route('admin.price-requests.destroy', $priceRequest) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Anda yakin ingin membatalkan pengajuan ini?');">
                 @csrf
                 @method('DELETE')
@@ -92,8 +94,51 @@
                     <i class="fas fa-times me-2"></i>Batalkan Request
                 </button>
             </form>
+            @else
+            <div></div>
+            @endif
+
+            @if(auth()->user()->role === 'owner')
+            <div>
+                <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="fas fa-times me-2"></i>Tolak
+                </button>
+                <form action="{{ route('admin.price-requests.approve', $priceRequest) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Anda yakin menyetujui perubahan harga ini? Harga treatment akan langsung diperbarui.');">
+                    @csrf
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check-circle me-2"></i>Setujui Perubahan
+                    </button>
+                </form>
+            </div>
+            @endif
         </div>
         @endif
     </div>
 </div>
+
+@if(auth()->user()->role === 'owner' && $priceRequest->status === 'pending')
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: #2a2a2a; color: #fff; border: 1px solid rgba(255,255,255,0.1);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <h5 class="modal-title" id="rejectModalLabel">Alasan Penolakan</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('admin.price-requests.reject', $priceRequest) }}" method="POST">
+        @csrf
+        <div class="modal-body">
+            <div class="mb-3">
+                <label for="rejection_note" class="form-label text-muted small text-uppercase fw-bold">Catatan Untuk Admin</label>
+                <textarea class="form-control bg-dark text-white border-secondary" id="rejection_note" name="rejection_note" rows="3" required placeholder="Tulis alasan penolakan..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.05);">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+            <button type="submit" class="btn btn-danger">Tolak Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
 @endsection

@@ -6,7 +6,7 @@
     {{-- Page Header --}}
     <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">Admin Area</span>
+            <span class="text-primary text-uppercase" style="letter-spacing: 2px; font-size: 0.85rem; font-weight: 500;">{{ Auth::user()->role == 'owner' ? 'Owner Area' : 'Admin Area' }}</span>
             <h2 class="mb-0 mt-2" style="font-family: 'Playfair Display', serif; font-size: 2.2rem;">
                 Detail Order <span style="color: var(--primary);">#{{ $order->order_code }}</span>
             </h2>
@@ -191,7 +191,13 @@
                             @if($order->payment_status === 'lunas')
                                 <span class="badge bg-success">Lunas</span>
                             @else
-                                <span class="badge bg-warning text-dark">Belum Lunas</span>
+                                <span class="badge bg-warning text-dark me-2 mb-1">Belum Lunas</span>
+                                <form action="{{ route('admin.orders.confirmPayment', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Konfirmasi order ini telah Lunas?');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-success py-0 px-2 rounded-pill shadow-sm" style="font-size: 0.65rem; height: 20px;">
+                                        <i class="fas fa-check me-1"></i>Set Lunas
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>

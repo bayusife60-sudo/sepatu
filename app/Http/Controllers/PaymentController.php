@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Xendit\Xendit;
-use Xendit\Invoices;
+use Xendit\Invoice;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
@@ -41,7 +41,7 @@ class PaymentController extends Controller
         ];
 
         try {
-            $result = Invoices::create($params);
+            $result = Invoice::create($params);
 
             $order->update([
                 'xendit_invoice_id' => $result['id'],

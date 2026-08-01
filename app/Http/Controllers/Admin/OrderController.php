@@ -157,9 +157,11 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            "customer_id"          => "required|exists:users,id",
-            "customer_name"        => "nullable|string|max:150",
-            "customer_phone"       => "nullable|string|max:20",
+            "is_new_customer"      => "nullable|boolean",
+            "customer_id"          => "required_without:is_new_customer|nullable|exists:users,id",
+            "new_customer_email"   => "required_if:is_new_customer,1|nullable|email|unique:users,email",
+            "customer_name"        => "required_if:is_new_customer,1|nullable|string|max:150",
+            "customer_phone"       => "required_if:is_new_customer,1|nullable|string|max:20",
             "service_method"       => "required|in:datang_langsung,pickup_delivery",
             "pickup_address"       => "nullable|string|max:500",
             "pickup_date"          => "nullable|date",
@@ -181,7 +183,21 @@ class OrderController extends Controller
                     $orderCode = "CLZ-" . strtoupper(\Str::random(8));
                 } while (Order::where("order_code", $orderCode)->exists());
 
-                $user = User::find($validated["customer_id"]);
+                $customerId = $validated["customer_id"] ?? null;
+                $user = null;
+
+                if (!empty($validated["is_new_customer"])) {
+                    $user = User::create([
+                        'name' => $validated['customer_name'],
+                        'email' => $validated['new_customer_email'],
+                        'password' => bcrypt('password123'), // Default password
+                        'phone' => $validated['customer_phone'],
+                        'role' => 'customer',
+                    ]);
+                    $customerId = $user->id;
+                } else if ($customerId) {
+                    $user = User::find($customerId);
+                }
 
                 $customerName = !empty($validated["customer_name"])
                     ? $validated["customer_name"]
@@ -197,7 +213,7 @@ class OrderController extends Controller
 
                 $order = Order::create([
                     "order_code"           => $orderCode,
-                    "customer_id"          => $validated["customer_id"],
+                    "customer_id"          => $customerId,
                     "customer_name"        => $customerName,
                     "customer_phone"       => $customerPhone,
                     "service_method"       => $validated["service_method"],

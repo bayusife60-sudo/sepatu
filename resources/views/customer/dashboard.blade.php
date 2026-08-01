@@ -55,6 +55,19 @@
     </div>
     @endif
 
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 border-0 shadow-sm p-3" role="alert" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-left: 4px solid #f87171 !important; border-radius: 12px;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-times-circle me-3 fa-2x"></i> 
+            <div>
+                <div class="fw-bold">Terjadi Kesalahan</div>
+                <div class="small mt-1 text-white-50">{{ session('error') }}</div>
+            </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close" style="top: 1rem; right: 1rem;"></button>
+    </div>
+    @endif
+
     {{-- Header Section --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end mb-5">
         <div>
